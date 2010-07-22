@@ -87,7 +87,7 @@ module Mongoid
       end
   
       def parse_value(value, operator)
-        parse_date(value) or parse_integer(value) or parse_array(value, operator) or value
+        parse_date(value) or parse_integer(value) or parse_array(value, operator) or parse_regex(value) or value
       end
   
       def parse_date(date)
@@ -110,6 +110,12 @@ module Mongoid
   
       def parse_array(value, operator)
         split_and_strip(value) if array_operator?(operator)
+      end
+      
+      def parse_regex(regex)
+        if match = regex.match(/^\/(.*)\/(i|m|x)?$/)
+          eval(match[0])
+        end
       end
   
       def array_operator?(operator)

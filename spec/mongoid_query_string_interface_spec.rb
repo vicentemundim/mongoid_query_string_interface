@@ -150,6 +150,14 @@ describe Mongoid::QueryStringInterface do
       Document.filter_by('title' => document.title, 'controller' => 'documents', 'action' => 'index', 'format' => 'json').should == [document]
     end
     
+    it 'should accept simple regex values' do
+      Document.filter_by('title' => '/ome Tit/').should == [document]
+    end
+    
+    it 'should accept regex values with modifiers' do
+      Document.filter_by('title' => '/some title/i').should == [document]
+    end
+    
     context 'with conditional operators' do
       it 'should use it when given as the last portion of attribute name' do
         Document.filter_by('title.ne' => 'Some Other Title').should == [document]
