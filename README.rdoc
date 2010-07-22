@@ -8,7 +8,7 @@ model.
 
 == Repository
 
-http://github.com/vicentemundim/mongoid-query-string-interface
+http://github.com/vicentemundim/mongoid_query_string_interface
 
 = Installing
 
@@ -29,7 +29,7 @@ To use it, just extend Mongoid::QueryStringInterface in your document model:
     extend Mongoid::QueryInterfaceString
     
     # ... add fields here
-	end
+  end
 	
 Then, in your controllers put:
 
