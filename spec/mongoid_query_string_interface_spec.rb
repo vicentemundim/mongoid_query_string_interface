@@ -169,7 +169,7 @@ describe Mongoid::QueryStringInterface do
       
       context 'with date values' do
         it 'should parse a date correctly' do
-          Document.filter_by('created_at' => 5.days.ago.to_s).should == [document]
+          Document.filter_by('created_at' => document.created_at.to_s).should == [document]
         end
       end
       
@@ -180,6 +180,16 @@ describe Mongoid::QueryStringInterface do
         
         it 'should parse a float correctly' do
           Document.filter_by('some_float.lt' => '2.1').should == [document]
+        end
+      end
+      
+      context 'with regex values' do
+        it 'should accept simple regex values' do
+          Document.filter_by('title.in' => '/ome Tit/').should == [document]
+        end
+
+        it 'should accept regex values with modifiers' do
+          Document.filter_by('title.in' => '/some title/i').should == [document]
         end
       end
       

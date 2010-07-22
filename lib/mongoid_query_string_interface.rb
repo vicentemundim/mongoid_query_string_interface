@@ -109,7 +109,9 @@ module Mongoid
       end
   
       def parse_array(value, operator)
-        split_and_strip(value) if array_operator?(operator)
+        if array_operator?(operator)
+          split_and_strip(value).map { |item| parse_regex(item) or item }
+        end
       end
       
       def parse_regex(regex)
