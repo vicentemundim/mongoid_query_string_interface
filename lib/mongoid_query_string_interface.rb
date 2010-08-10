@@ -87,7 +87,7 @@ module Mongoid
       end
   
       def parse_value(value, operator)
-        parse_date(value) or parse_integer(value) or parse_array(value, operator) or parse_regex(value) or value
+        parse_date(value) or parse_integer(value) or parse_float(value) or parse_array(value, operator) or parse_regex(value) or value
       end
   
       def parse_date(date)
@@ -97,7 +97,7 @@ module Mongoid
       end
   
       def parse_integer(integer)
-        if match = integer.match(/\d+/)
+        if match = integer.match(/^\d+$/)
           match[0].to_i
         end
       end

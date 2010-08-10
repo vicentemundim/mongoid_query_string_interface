@@ -43,7 +43,7 @@ describe Mongoid::QueryStringInterface do
     Document.create :title => 'Some Other Title', :some_integer => 2, :some_float => 2.2, :status => 'published',
                     :created_at => 2.days.ago.to_time, :tags => ['esportes', 'futebol', 'jabulani', 'flamengo'],
                     :embedded_document => { :name => 'other embedded document',
-                      :tags => ['yup', 'uhu', 'yeah'] }
+                      :tags => ['yup', 'uhu', 'yeah', 'H4', '4H', '4H4', 'H4.1', '4.1H', '4.1H4.1'] }
   end
   
   before :each do
@@ -178,8 +178,32 @@ describe Mongoid::QueryStringInterface do
           Document.filter_by('some_integer.lt' => '2').should == [document]
         end
         
+        it 'should not parse as an integer if it does not starts with a digit' do
+          Document.filter_by('embedded_document.tags' => 'H4').should == [other_document]
+        end
+
+        it 'should not parse as an integer if it does not ends with a digit' do
+          Document.filter_by('embedded_document.tags' => '4H').should == [other_document]
+        end
+
+        it 'should not parse as an integer if it has a non digit character in it' do
+          Document.filter_by('embedded_document.tags' => '4H4').should == [other_document]
+        end
+
         it 'should parse a float correctly' do
           Document.filter_by('some_float.lt' => '2.1').should == [document]
+        end
+        
+        it 'should not parse as a float if it does not starts with a digit' do
+          Document.filter_by('embedded_document.tags' => 'H4.1').should == [other_document]
+        end
+
+        it 'should not parse as a float if it does not ends with a digit' do
+          Document.filter_by('embedded_document.tags' => '4.1H').should == [other_document]
+        end
+
+        it 'should not parse as a float if it has a non digit character in it' do
+          Document.filter_by('embedded_document.tags' => '4.1H4.1').should == [other_document]
         end
       end
       
