@@ -6,7 +6,11 @@ module Mongoid
 
     def filter_by(params={})
       params = hash_with_indifferent_access(params)
-      where(filtering_options(params)).order_by(*sorting_options(params)).paginate(pagination_options(params))
+      filter_only_by(params).order_by(*sorting_options(params)).paginate(pagination_options(params))
+    end
+    
+    def filter_only_by(params={})
+      where(filtering_options(hash_with_indifferent_access(params)))
     end
 
     def paginated_collection_with_filter_by(params={})
