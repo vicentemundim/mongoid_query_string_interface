@@ -158,6 +158,10 @@ describe Mongoid::QueryStringInterface do
       Document.filter_by('title' => '/some title/i').should == [document]
     end
     
+    it 'should not raise error if empty values are used' do
+      lambda { Document.filter_by('title' => '') }.should_not raise_error
+    end
+    
     context 'with conditional operators' do
       it 'should use it when given as the last portion of attribute name' do
         Document.filter_by('title.ne' => 'Some Other Title').should == [document]

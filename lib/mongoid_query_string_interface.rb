@@ -149,7 +149,19 @@ module Mongoid
       end
   
       def sorting_parameter?(key, value)
-        key.to_s == 'order_by' or key.match(/(.*)\.(#{SORTING_OPERATORS.join('|')})/) or SORTING_OPERATORS.include?(value.to_sym) 
+        order_by_parameter?(key) or sorting_key_parameter?(key) or sorting_value_parameter?(value)
+      end
+      
+      def order_by_parameter?(key)
+        key.to_s == 'order_by'
+      end
+      
+      def sorting_key_parameter?(key)
+        key.match(/(.*)\.(#{SORTING_OPERATORS.join('|')})/)
+      end
+      
+      def sorting_value_parameter?(value)
+        value.present? && SORTING_OPERATORS.include?(value.to_sym)
       end
   
       def parse_order_by(options)
