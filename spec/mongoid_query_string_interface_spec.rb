@@ -162,6 +162,10 @@ describe Mongoid::QueryStringInterface do
       lambda { Document.filter_by('title' => '') }.should_not raise_error
     end
     
+    it 'should unescape all values in the URI' do
+      Document.filter_by('title' => 'Some%20Title').should == [document]
+    end
+    
     context 'with conditional operators' do
       it 'should use it when given as the last portion of attribute name' do
         Document.filter_by('title.ne' => 'Some Other Title').should == [document]

@@ -58,7 +58,7 @@ module Mongoid
       
           attribute = attribute_from(key)
           operator = operator_from(key)
-          value = parse_value(value, operator)
+          value = parse_value(unescape(value), operator)
 
           if operator
             filter = { operator => value }
@@ -88,6 +88,10 @@ module Mongoid
         if match = key.match(/.*\.(#{CONDITIONAL_OPERATORS.join('|')})/)
           "$#{match[1]}".to_sym
         end
+      end
+      
+      def unescape(value)
+        URI.unescape(value)
       end
   
       def parse_value(value, operator)
