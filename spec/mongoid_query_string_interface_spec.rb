@@ -35,6 +35,7 @@ describe Mongoid::QueryStringInterface do
   let :document do
     Document.create :title => 'Some Title', :some_integer => 1, :some_float => 1.1, :status => 'published',
                     :created_at => 5.days.ago.to_time, :tags => ['esportes', 'basquete', 'flamengo'],
+                    :some_boolean => true, :other_boolean => false, :nil_value => nil,
                     :embedded_document => { :name => 'embedded document',
                       :tags => ['bar', 'foo', 'yeah'] }
   end
@@ -42,6 +43,7 @@ describe Mongoid::QueryStringInterface do
   let :other_document do
     Document.create :title => 'Some Other Title', :some_integer => 2, :some_float => 2.2, :status => 'published',
                     :created_at => 2.days.ago.to_time, :tags => ['esportes', 'futebol', 'jabulani', 'flamengo'],
+                    :some_boolean => false, :other_boolean => true, :nil_value => 'not_nil',
                     :embedded_document => { :name => 'other embedded document',
                       :tags => ['yup', 'uhu', 'yeah', 'H4', '4H', '4H4', 'H4.1', '4.1H', '4.1H4.1'] }
   end
@@ -222,6 +224,22 @@ describe Mongoid::QueryStringInterface do
 
         it 'should accept regex values with modifiers' do
           Document.filter_by('title.in' => '/some title/i').should == [document]
+        end
+      end
+      
+      context 'with boolean values' do
+        it 'should accept "true" string as a boolean value' do
+          Document.filter_by('some_boolean' => 'true').should == [document]
+        end
+
+        it 'should accept "false" string as a boolean value' do
+          Document.filter_by('other_boolean' => 'false').should == [document]
+        end
+      end
+      
+      context 'with nil value' do
+        it 'should accept "nil" string as nil value' do
+          Document.filter_by('nil_value' => 'nil').should == [document]
         end
       end
       

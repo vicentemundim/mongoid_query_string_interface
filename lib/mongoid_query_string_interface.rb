@@ -95,7 +95,12 @@ module Mongoid
       end
   
       def parse_value(value, operator)
-        parse_date(value) or parse_integer(value) or parse_float(value) or parse_array(value, operator) or parse_regex(value) or value
+        parse_date(value) or
+          parse_integer(value) or
+          parse_float(value) or
+          parse_array(value, operator) or
+          parse_regex(value) or
+          parse_boolean_and_nil(value)
       end
   
       def parse_date(date)
@@ -103,7 +108,7 @@ module Mongoid
       rescue Exception
         nil
       end
-  
+      
       def parse_integer(integer)
         if match = integer.match(/^\d+$/)
           match[0].to_i
@@ -125,6 +130,18 @@ module Mongoid
       def parse_regex(regex)
         if match = regex.match(/^\/(.*)\/(i|m|x)?$/)
           eval(match[0])
+        end
+      end
+  
+      def parse_boolean_and_nil(value)
+        unless value.nil? || value.empty?
+          if ['true', 'false'].include?(value.strip)
+            value.strip == 'true'
+          elsif value.strip == 'nil'
+            nil
+          else
+            value
+          end
         end
       end
   
