@@ -1,3 +1,6 @@
+require File.expand_path(File.join('parsers', 'date_time_parser'), File.dirname(__FILE__))
+require File.expand_path(File.join('parsers', 'number_parser'), File.dirname(__FILE__))
+
 module Mongoid
   module QueryStringInterface
     CONDITIONAL_OPERATORS = [:all, :exists, :gte, :gt, :in, :lte, :lt, :ne, :nin, :size, :near, :within]
@@ -96,29 +99,18 @@ module Mongoid
   
       def parse_value(value, operator)
         parse_date(value) or
-          parse_integer(value) or
-          parse_float(value) or
+          parse_number(value) or
           parse_array(value, operator) or
           parse_regex(value) or
           parse_boolean_and_nil(value)
       end
   
       def parse_date(date)
-        date.to_time and Time.parse(date)
-      rescue Exception
-        nil
+        Mongoid::QueryStringInterface::Parsers::DateTimeParser.parse(date) if Mongoid::QueryStringInterface::Parsers::DateTimeParser.parseable?(date)
       end
       
-      def parse_integer(integer)
-        if match = integer.match(/^\d+$/)
-          match[0].to_i
-        end
-      end
-  
-      def parse_float(float)
-        if match = float.match(/^(\d+)(\.?\d*)$/)
-          match[0].to_f
-        end
+      def parse_number(number)
+        Mongoid::QueryStringInterface::Parsers::NumberParser.parse(number) if Mongoid::QueryStringInterface::Parsers::NumberParser.parseable?(number)
       end
   
       def parse_array(value, operator)
