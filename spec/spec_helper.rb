@@ -19,7 +19,6 @@ Mongoid.configure do |config|
   name = "query_string_interface_test"
   config.master = Mongo::Connection.new.db(name)
   config.allow_dynamic_fields = true
-  config.use_object_ids = true
 end
 
 RSpec.configure do |config|
