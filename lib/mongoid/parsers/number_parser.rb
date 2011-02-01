@@ -2,17 +2,26 @@ module Mongoid
   module QueryStringInterface
     module Parsers
       class NumberParser
-        def self.parseable?(value)
-          not parse(value).nil?
+        def parseable?(value)
+          integer?(value) or float?(value)
         end
         
-        def self.parse(value)
-          if value =~ /^\d+$/
+        def parse(value)
+          if integer?(value)
             value.to_i
-          elsif value =~ /^(\d+)(\.?\d*)$/
+          elsif float?(value)
             value.to_f
           end
         end
+        
+        private
+          def integer?(value)
+            value =~ /^\d+$/
+          end
+          
+          def float?(value)
+            value =~ /^(\d+)(\.?\d*)$/
+          end
       end
     end
   end

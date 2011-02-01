@@ -2,11 +2,11 @@ module Mongoid
   module QueryStringInterface
     module Parsers
       class DateTimeParser
-        def self.parseable?(value)
-          not self.parse(value).nil?
+        def parseable?(value)
+          not parse(value).nil?
         end
         
-        def self.parse(value)
+        def parse(value)
           value.to_time and Time.parse(value)
         rescue Exception
           nil

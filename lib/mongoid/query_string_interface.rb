@@ -6,7 +6,7 @@ module Mongoid
     CONDITIONAL_OPERATORS = [:all, :exists, :gte, :gt, :in, :lte, :lt, :ne, :nin, :size, :near, :within]
     ARRAY_CONDITIONAL_OPERATORS = [:all, :in, :nin]
     SORTING_OPERATORS = [:asc, :desc]
-
+    
     def filter_by(params={})
       params = hash_with_indifferent_access(params)
       filter_only_by(params).order_by(*sorting_options(params)).paginate(pagination_options(params))
@@ -106,11 +106,11 @@ module Mongoid
       end
   
       def parse_date(date)
-        Mongoid::QueryStringInterface::Parsers::DateTimeParser.parse(date) if Mongoid::QueryStringInterface::Parsers::DateTimeParser.parseable?(date)
+        Mongoid::QueryStringInterface::Parsers::DateTimeParser.new.parse(date) if Mongoid::QueryStringInterface::Parsers::DateTimeParser.new.parseable?(date)
       end
       
       def parse_number(number)
-        Mongoid::QueryStringInterface::Parsers::NumberParser.parse(number) if Mongoid::QueryStringInterface::Parsers::NumberParser.parseable?(number)
+        Mongoid::QueryStringInterface::Parsers::NumberParser.new.parse(number) if Mongoid::QueryStringInterface::Parsers::NumberParser.new.parseable?(number)
       end
   
       def parse_array(value, operator)
