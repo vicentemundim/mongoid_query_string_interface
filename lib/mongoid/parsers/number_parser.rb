@@ -2,7 +2,7 @@ module Mongoid
   module QueryStringInterface
     module Parsers
       class NumberParser
-        def parseable?(value)
+        def parseable?(value, operator)
           integer?(value) or float?(value)
         end
         

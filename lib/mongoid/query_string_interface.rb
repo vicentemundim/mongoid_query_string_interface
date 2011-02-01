@@ -1,11 +1,21 @@
 require File.expand_path(File.join('parsers', 'date_time_parser'), File.dirname(__FILE__))
 require File.expand_path(File.join('parsers', 'number_parser'), File.dirname(__FILE__))
+require File.expand_path(File.join('parsers', 'array_parser'), File.dirname(__FILE__))
+require File.expand_path(File.join('parsers', 'regex_parser'), File.dirname(__FILE__))
+require File.expand_path(File.join('parsers', 'boolean_and_nil_parser'), File.dirname(__FILE__))
 
 module Mongoid
   module QueryStringInterface
     CONDITIONAL_OPERATORS = [:all, :exists, :gte, :gt, :in, :lte, :lt, :ne, :nin, :size, :near, :within]
-    ARRAY_CONDITIONAL_OPERATORS = [:all, :in, :nin]
     SORTING_OPERATORS = [:asc, :desc]
+    
+    PARSERS = [
+      Mongoid::QueryStringInterface::Parsers::DateTimeParser.new,
+      Mongoid::QueryStringInterface::Parsers::NumberParser.new,
+      Mongoid::QueryStringInterface::Parsers::ArrayParser.new,
+      Mongoid::QueryStringInterface::Parsers::RegexParser.new,
+      Mongoid::QueryStringInterface::Parsers::BooleanAndNilParser.new
+    ]
     
     def filter_by(params={})
       params = hash_with_indifferent_access(params)
@@ -98,51 +108,11 @@ module Mongoid
       end
   
       def parse_value(value, operator)
-        parse_date(value) or
-          parse_number(value) or
-          parse_array(value, operator) or
-          parse_regex(value) or
-          parse_boolean_and_nil(value)
-      end
-  
-      def parse_date(date)
-        Mongoid::QueryStringInterface::Parsers::DateTimeParser.new.parse(date) if Mongoid::QueryStringInterface::Parsers::DateTimeParser.new.parseable?(date)
-      end
-      
-      def parse_number(number)
-        Mongoid::QueryStringInterface::Parsers::NumberParser.new.parse(number) if Mongoid::QueryStringInterface::Parsers::NumberParser.new.parseable?(number)
-      end
-  
-      def parse_array(value, operator)
-        if array_operator?(operator)
-          split_and_strip(value).map { |item| parse_regex(item) or item }
+        PARSERS.each do |parser|
+          return parser.parse(value) if parser.parseable?(value, operator)
         end
-      end
-      
-      def parse_regex(regex)
-        if match = regex.match(/^\/(.*)\/(i|m|x)?$/)
-          eval(match[0])
-        end
-      end
-  
-      def parse_boolean_and_nil(value)
-        unless value.nil? || value.empty?
-          if ['true', 'false'].include?(value.strip)
-            value.strip == 'true'
-          elsif value.strip == 'nil'
-            nil
-          else
-            value
-          end
-        end
-      end
-  
-      def array_operator?(operator)
-        ARRAY_CONDITIONAL_OPERATORS.map { |op| "$#{op}" }.include?(operator.to_s)
-      end
-  
-      def split_and_strip(values)
-        values.split('|').map(&:strip)
+        
+        return nil
       end
   
       def hash_with_indifferent_access(params)

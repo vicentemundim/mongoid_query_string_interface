@@ -1,15 +1,15 @@
 module Mongoid
   module QueryStringInterface
     module Parsers
-      class DateTimeParser
+      class RegexParser
         def parseable?(value, operator)
-          not parse(value).nil?
+          value =~ /^\/(.*)\/(i|m|x)?$/
         end
         
         def parse(value)
-          value.to_time and Time.parse(value)
-        rescue Exception
-          nil
+          if value =~ /^\/(.*)\/(i|m|x)?$/
+            eval($&)
+          end
         end
       end
     end
