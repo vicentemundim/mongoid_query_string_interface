@@ -1,7 +1,7 @@
 begin
   require 'bundler'
   Bundler.setup
-  Bundler.require(:default, :test)
+  Bundler.require(:default, :development)
 rescue LoadError
   puts 'Bundler is not installed, you need to gem install it in order to run the specs.'
   exit 1

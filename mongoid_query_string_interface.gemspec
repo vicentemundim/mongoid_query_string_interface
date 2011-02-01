@@ -14,11 +14,12 @@ Gem::Specification.new do |s|
   s.required_rubygems_version = ">= 1.3.6"
   s.rubyforge_project = "mongoid_query_string_interface"
 
-  s.add_runtime_dependency("mongoid", ["~>2.0.0.beta"])
+  s.add_runtime_dependency("mongoid", ["~> 2.0.0.rc"])
 
-  s.add_development_dependency(%q<rspec>, ["~> 2.0.0.beta"])
+  s.add_development_dependency(%q<rspec>, [">= 2.3.0"])
+  s.add_development_dependency(%q<database_cleaner>, [">= 0.5.0"])
 
-  s.files = Dir.glob("lib/**/*") + %w(MIT_LICENSE README.rdoc)
+  s.files = Dir.glob("lib/**/*") + %w(MIT_LICENSE README.rdoc Gemfile Gemfile.lock)
   s.require_path = 'lib'
 end
 

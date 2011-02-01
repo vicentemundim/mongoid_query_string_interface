@@ -1,3 +1,9 @@
+PATH
+  remote: .
+  specs:
+    mongoid_query_string_interface (0.1.7)
+      mongoid (~> 2.0.0.rc)
+
 GEM
   remote: http://rubygems.org/
   specs:
@@ -6,42 +12,61 @@ GEM
       builder (~> 2.1.2)
       i18n (~> 0.4)
     activesupport (3.0.3)
-    bson (1.0.4)
-    bson_ext (1.0.4)
+    archive-tar-minitar (0.5.2)
+    bson (1.2.0)
+    bson_ext (1.2.0)
     builder (2.1.2)
-    database_cleaner (0.6.0)
+    columnize (0.3.2)
+    database_cleaner (0.6.1)
     diff-lcs (1.1.2)
     i18n (0.5.0)
-    mongo (1.0.7)
-      bson (>= 1.0.4)
-    mongoid (2.0.0.beta.18)
-      activemodel (~> 3.0.0)
-      bson (= 1.0.4)
-      mongo (= 1.0.7)
+    linecache (0.43)
+    linecache19 (0.5.11)
+      ruby_core_source (>= 0.1.4)
+    mongo (1.2.0)
+      bson (>= 1.2.0)
+    mongoid (2.0.0.rc.7)
+      activemodel (~> 3.0)
+      mongo (~> 1.2)
       tzinfo (~> 0.3.22)
       will_paginate (~> 3.0.pre)
-    rspec (2.0.1)
-      rspec-core (~> 2.0.1)
-      rspec-expectations (~> 2.0.1)
-      rspec-mocks (~> 2.0.1)
-    rspec-core (2.0.1)
-    rspec-expectations (2.0.1)
-      diff-lcs (>= 1.1.2)
-    rspec-mocks (2.0.1)
-      rspec-core (~> 2.0.1)
-      rspec-expectations (~> 2.0.1)
-    tzinfo (0.3.23)
+    rake (0.8.7)
+    rspec (2.4.0)
+      rspec-core (~> 2.4.0)
+      rspec-expectations (~> 2.4.0)
+      rspec-mocks (~> 2.4.0)
+    rspec-core (2.4.0)
+    rspec-expectations (2.4.0)
+      diff-lcs (~> 1.1.2)
+    rspec-mocks (2.4.0)
+    ruby-debug (0.10.4)
+      columnize (>= 0.1)
+      ruby-debug-base (~> 0.10.4.0)
+    ruby-debug-base (0.10.4)
+      linecache (>= 0.3)
+    ruby-debug-base19 (0.11.24)
+      columnize (>= 0.3.1)
+      linecache19 (>= 0.5.11)
+      ruby_core_source (>= 0.1.4)
+    ruby-debug19 (0.11.6)
+      columnize (>= 0.3.1)
+      linecache19 (>= 0.5.11)
+      ruby-debug-base19 (>= 0.11.19)
+    ruby_core_source (0.1.4)
+      archive-tar-minitar (>= 0.5.2)
+    tzinfo (0.3.24)
     will_paginate (3.0.pre2)
 
 PLATFORMS
   ruby
 
 DEPENDENCIES
-  bson (= 1.0.4)
-  bson_ext (= 1.0.4)
-  database_cleaner
-  mongoid (= 2.0.0.beta.18)
-  rspec (= 2.0.1)
-  rspec-core (= 2.0.1)
-  rspec-expectations (= 2.0.1)
-  rspec-mocks (= 2.0.1)
+  bson
+  bson_ext
+  database_cleaner (>= 0.5.0)
+  mongoid (~> 2.0.0.rc)
+  mongoid_query_string_interface!
+  rake (= 0.8.7)
+  rspec (>= 2.3.0)
+  ruby-debug
+  ruby-debug19

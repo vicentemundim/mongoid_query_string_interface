@@ -1,15 +1,15 @@
 source 'http://rubygems.org'
 
-gem 'bson', '1.0.4'
-gem 'bson_ext', '1.0.4'
-gem 'mongoid', '2.0.0.beta.18'
+gemspec
 
-group(:test) do
-  gem 'rspec',              '2.0.1'
-  gem 'rspec-core',         '2.0.1', :require => 'rspec/core'
-  gem 'rspec-expectations', '2.0.1', :require => 'rspec/expectations'
-  gem 'rspec-mocks',        '2.0.1', :require => 'rspec/mocks'
-  
-  gem 'database_cleaner'
+gem "rake", "0.8.7"
+gem 'bson'
+gem 'bson_ext'
+
+platforms :mri_18 do
+  gem "ruby-debug"
 end
 
+platforms :mri_19 do
+  gem "ruby-debug19", :require => 'ruby-debug' if RUBY_VERSION < "1.9.3"
+end
