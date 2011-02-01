@@ -279,6 +279,20 @@ describe Mongoid::QueryStringInterface do
           Document.filter_by('tags.all' => 'esportes|basquete', 'tags.nin' => 'rede globo|esporte espetacular').should == [document]
         end
       end
+      
+      context "with 'or' attribute" do
+        it "should accept a json with query data" do
+          Document.filter_by('or' => '[{"tags.all": "flamengo|basquete"}, {"tags.all": "flamengo|jabulani"}]').should == [other_document, document]
+        end
+        
+        it "should unescape the json" do
+          Document.filter_by('or' => '[{"tags.all":%20"flamengo%7Cbasquete"},%20{"tags.all":%20"flamengo%7Cjabulani"}]').should == [other_document, document]
+        end
+        
+        it "should accept any valid mongodb query" do
+          Document.filter_by('or' => '[{"tags.all": ["flamengo", "basquete"]}, {"tags": {"$all" : ["flamengo", "jabulani"]}}]').should == [other_document, document]
+        end
+      end
     end
   end
   

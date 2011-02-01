@@ -8,6 +8,9 @@ module Mongoid
   module QueryStringInterface
     CONDITIONAL_OPERATORS = [:all, :exists, :gte, :gt, :in, :lte, :lt, :ne, :nin, :size, :near, :within]
     SORTING_OPERATORS = [:asc, :desc]
+    OR_OPERATOR = :or
+    
+    ATTRIBUTE_REGEX = /(.*)\.(#{(CONDITIONAL_OPERATORS + SORTING_OPERATORS + [OR_OPERATOR]).join('|')})/
     
     PARSERS = [
       Mongoid::QueryStringInterface::Parsers::DateTimeParser.new,
@@ -70,31 +73,52 @@ module Mongoid
           key, value = item
       
           attribute = attribute_from(key)
-          operator = operator_from(key)
-          value = parse_value(unescape(value), operator)
-
-          if operator
-            filter = { operator => value }
-
-            if result.has_key?(attribute)
-              result[attribute].merge!(filter)
-            else
-              result[attribute] = filter
-            end
+          
+          if or_attribute?(attribute)
+            parse_or_attribute(attribute, key, value, result)
           else
-            result[attribute] = value
+            parse_normal_attribute(attribute, key, value, result)
           end
-      
-          result
         end
+      end
+      
+      def parse_or_attribute(attribute, key, value, result)
+        result["$or"] = ::JSON.parse(unescape(value)).map do |filters|
+          parse_operators(filters)
+        end
+        
+        result
+      end
+      
+      def parse_normal_attribute(attribute, key, value, result)
+        operator = operator_from(key)
+        value = parse_value(value, operator)
+
+        if operator
+          filter = { operator => value }
+
+          if result.has_key?(attribute)
+            result[attribute].merge!(filter)
+          else
+            result[attribute] = filter
+          end
+        else
+          result[attribute] = value
+        end
+    
+        result
       end
   
       def attribute_from(key)
-        if match = key.match(/(.*)\.(#{(CONDITIONAL_OPERATORS + SORTING_OPERATORS).join('|')})/)
-          match[1].to_sym
+        if key =~ ATTRIBUTE_REGEX
+          $1.to_sym
         else
           key.to_sym
         end
+      end
+      
+      def or_attribute?(attribute)
+        OR_OPERATOR == attribute
       end
   
       def operator_from(key)
@@ -108,11 +132,17 @@ module Mongoid
       end
   
       def parse_value(value, operator)
-        PARSERS.each do |parser|
-          return parser.parse(value) if parser.parseable?(value, operator)
-        end
+        if value.is_a?(String)
+          value = unescape(value)
+          
+          PARSERS.each do |parser|
+            return parser.parse(value) if parser.parseable?(value, operator)
+          end
         
-        return nil
+          return nil
+        else
+          value
+        end
       end
   
       def hash_with_indifferent_access(params)
