@@ -54,9 +54,13 @@ module Mongoid
       []
     end
 
+    def default_pagination_options
+      { :per_page => 12, :page => 1 }
+    end
+
     private
       def pagination_options(options)
-        options.reverse_merge :per_page => 12, :page => 1
+        options.reverse_merge default_pagination_options
       end
   
       def filtering_options(options)
