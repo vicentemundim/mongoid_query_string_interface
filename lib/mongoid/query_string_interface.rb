@@ -22,9 +22,14 @@ module Mongoid
     
     def filter_by(params={})
       params = hash_with_indifferent_access(params)
-      filter_only_by(params).order_by(*sorting_options(params)).paginate(pagination_options(params))
+      filter_only_and_order_by(params).paginate(pagination_options(params))
     end
-    
+
+    def filter_only_and_order_by(params={})
+      params = hash_with_indifferent_access(params)
+      filter_only_by(params).order_by(*sorting_options(params))
+    end
+
     def filter_only_by(params={})
       where(filtering_options(hash_with_indifferent_access(params)))
     end
