@@ -1,7 +1,7 @@
 PATH
   remote: .
   specs:
-    mongoid_query_string_interface (0.2.2)
+    mongoid_query_string_interface (0.2.3)
       json (>= 1.4.6)
       mongoid (~> 2.0.0.rc)
 

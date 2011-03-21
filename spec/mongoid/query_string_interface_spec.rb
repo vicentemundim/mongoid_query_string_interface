@@ -70,7 +70,27 @@ describe Mongoid::QueryStringInterface do
       Document.filter_by('created_at.asc' => nil).should == [document, other_document]
     end
   end
-  
+
+  context "when filtering with optimized pagination" do
+    it "should use default parameters" do
+      params = { 'title' => 'title' }
+      mock_criteria = mock(Mongoid::Criteria)
+      Document.should_receive(:filter_only_and_order_by).with(params).and_return(mock_criteria)
+      mock_criteria.should_receive(:skip).with(0).and_return(mock_criteria)
+      mock_criteria.should_receive(:limit).with(12)
+      Document.filter_with_optimized_pagination_by(params)
+    end
+
+    it "should use given pager parameters" do
+      params = { 'title' => 'title', 'per_page' => 100, 'page' => 3 }
+      mock_criteria = mock(Mongoid::Criteria)
+      Document.should_receive(:filter_only_and_order_by).with(params).and_return(mock_criteria)
+      mock_criteria.should_receive(:skip).with(200).and_return(mock_criteria)
+      mock_criteria.should_receive(:limit).with(100)
+      Document.filter_with_optimized_pagination_by(params)
+    end
+  end
+
   context 'with pagination' do
     before :each do
       @context = mock('context')

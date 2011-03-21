@@ -25,6 +25,15 @@ module Mongoid
       filter_only_and_order_by(params).paginate(pagination_options(params))
     end
 
+    def filter_with_optimized_pagination_by(params={})
+      params = hash_with_indifferent_access(params)
+      per_page = (params[:per_page] || default_pagination_options[:per_page]).to_i
+      page = (params[:page] || default_pagination_options[:page]).to_i
+      skip = per_page * (page - 1)
+
+      filter_only_and_order_by(params).skip(skip).limit(per_page)
+    end
+
     def filter_only_and_order_by(params={})
       params = hash_with_indifferent_access(params)
       filter_only_by(params).order_by(*sorting_options(params))
@@ -58,7 +67,7 @@ module Mongoid
       { :per_page => 12, :page => 1 }
     end
 
-    private
+    protected
       def pagination_options(options)
         options.reverse_merge default_pagination_options
       end
