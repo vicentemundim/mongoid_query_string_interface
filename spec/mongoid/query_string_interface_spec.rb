@@ -71,6 +71,29 @@ describe Mongoid::QueryStringInterface do
     end
   end
 
+  context "when filtering with pagination" do
+    it "should filter by given params" do
+      params = { 'title' => 'title' }
+      collection = mock(WillPaginate::Collection).as_null_object
+      Document.should_receive(:filter_by).with(params).and_return(collection)
+      Document.filter_with_pagination_by(params)
+    end
+
+    it "should return a pager" do
+      params = { 'title' => 'title' }
+      collection = mock(WillPaginate::Collection).as_null_object
+      Document.stub(:filter_by).with(params).and_return(collection)
+      Document.filter_with_pagination_by(params).should have_key(:pager)
+    end
+
+    it "should return results using human model name" do
+      params = { 'title' => 'title' }
+      collection = mock(WillPaginate::Collection).as_null_object
+      Document.stub(:filter_by).with(params).and_return(collection)
+      Document.filter_with_pagination_by(params).should have_key(:documents)
+    end
+  end
+
   context "when filtering with optimized pagination" do
     it "should use default parameters" do
       params = { 'title' => 'title' }

@@ -11,7 +11,8 @@ module Mongoid
     OR_OPERATOR = :or
     
     ATTRIBUTE_REGEX = /(.*)\.(#{(CONDITIONAL_OPERATORS + SORTING_OPERATORS + [OR_OPERATOR]).join('|')})/
-    
+    PAGER_ATTRIBUTES = [:total_entries, :total_pages, :per_page, :offset, :previous_page, :current_page, :next_page]
+
     PARSERS = [
       Mongoid::QueryStringInterface::Parsers::DateTimeParser.new,
       Mongoid::QueryStringInterface::Parsers::NumberParser.new,
@@ -23,6 +24,17 @@ module Mongoid
     def filter_by(params={})
       params = hash_with_indifferent_access(params)
       filter_only_and_order_by(params).paginate(pagination_options(params))
+    end
+
+    def filter_with_pagination_by(params)
+      result = filter_by(params)
+
+      pager = PAGER_ATTRIBUTES.inject({}) do |pager, attr|
+        pager[attr] = result.send(attr)
+        pager
+      end
+
+      return { :pager => pager, model_name.human.underscore.pluralize.to_sym => result }
     end
 
     def filter_with_optimized_pagination_by(params={})
@@ -49,7 +61,7 @@ module Mongoid
       pagination = pagination_options(params)
       pager = WillPaginate::Collection.new pagination[:page], pagination[:per_page], where(filtering_options(params)).count
   
-      [:total_entries, :total_pages, :per_page, :offset, :previous_page, :current_page, :next_page].inject({}) do |result, attr|
+      PAGER_ATTRIBUTES.inject({}) do |result, attr|
         result[attr] = pager.send(attr)
         result
       end
