@@ -326,17 +326,33 @@ describe Mongoid::QueryStringInterface::Parsers::FilterParser do
 
     Mongoid::QueryStringInterface::ARRAY_CONDITIONAL_OPERATORS.each do |operator|
       context "with array operator $#{operator}" do
-        context "with a single value" do
-          subject do
-            described_class.new("tags.#{operator}", 'Some Value')
-          end
+        if operator == :all
+          context "with a single value" do
+            subject do
+              described_class.new("tags.all", 'Some Value')
+            end
 
-          it "should return the field name as attribute" do
-            subject.attribute.should == 'tags'
-          end
+            it "should return the field name as attribute" do
+              subject.attribute.should == 'tags'
+            end
 
-          it "should return the value as an array, using the operator" do
-            subject.value.should == { "$#{operator}" => ['Some Value'] }
+            it "should return the value as an array, using the operator $in instead of all" do
+              subject.value.should == { "$in" => ['Some Value'] }
+            end
+          end
+        else
+          context "with a single value" do
+            subject do
+              described_class.new("tags.#{operator}", 'Some Value')
+            end
+
+            it "should return the field name as attribute" do
+              subject.attribute.should == 'tags'
+            end
+
+            it "should return the value as an array, using the operator" do
+              subject.value.should == { "$#{operator}" => ['Some Value'] }
+            end
           end
         end
 

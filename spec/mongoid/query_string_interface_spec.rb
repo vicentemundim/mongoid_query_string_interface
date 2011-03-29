@@ -284,6 +284,18 @@ describe Mongoid::QueryStringInterface do
                           :created_at => 5.days.ago.to_time, :tags => ['esportes', 'basquete', 'flamengo', 'rede globo', 'esporte espetacular']
         end
         
+        let :default_parameters do
+          Document.default_filtering_options.inject({}) { |r, i| k, v = i; r[k.to_s] = v; r }
+        end
+
+        let :criteria do
+          criteria = mock(Mongoid::Criteria)
+          criteria.stub!(:where).and_return(criteria)
+          criteria.stub!(:order_by).and_return(criteria)
+          criteria.stub!(:paginate).and_return(criteria)
+          criteria
+        end
+
         it 'should convert values into arrays for operator $all' do
           Document.filter_by('tags.all' => document.tags.join('|')).should == [document]
         end
@@ -312,6 +324,33 @@ describe Mongoid::QueryStringInterface do
         it 'should accept different conditional operators for the same attribute' do
           document_with_similar_tags
           Document.filter_by('tags.all' => 'esportes|basquete', 'tags.nin' => 'rede globo|esporte espetacular').should == [document]
+        end
+
+        context "when only one tag is given to $all" do
+          it "should convert to a $in parameter for optimization" do
+            Document.should_receive(:where)
+                    .with(default_parameters.merge('tags' => { '$in' => ['esportes'] }))
+                    .and_return(criteria)
+            Document.filter_by('tags.all' => 'esportes')
+          end
+
+          context "and there is another tags parameter" do
+            it "should convert to a $in parameter for optimization" do
+              Document.should_receive(:where)
+                      .with(default_parameters.merge('tags' => { '$in' => ['esportes'], '$nin' => ['futebol'] }))
+                      .and_return(criteria)
+              Document.filter_by('tags.all' => 'esportes', 'tags.nin' => 'futebol')
+            end
+          end
+        end
+
+        context "when more than one tag is given to $all" do
+          it "should not modify the $all parameter value" do
+            Document.should_receive(:where)
+                    .with(default_parameters.merge('tags' => { '$all' => ['esportes', 'Flamengo'] }))
+                    .and_return(criteria)
+            Document.filter_by('tags.all' => 'esportes|Flamengo')
+          end
         end
       end
       

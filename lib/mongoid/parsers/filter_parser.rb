@@ -52,6 +52,8 @@ module Mongoid
             if operator
               if or_attribute?
                 parsed_json_value
+              elsif all_operator? && parsed_value.size == 1
+                { '$in' => parsed_value }
               else
                 { operator => parsed_value }
               end
@@ -92,6 +94,10 @@ module Mongoid
 
           def unescaped_raw_value
             @unescaped_raw_value ||= raw_value.is_a?(String) ? CGI.unescape(raw_value) : raw_value
+          end
+
+          def all_operator?
+            operator == '$all'
           end
 
           def or_attribute?
