@@ -65,9 +65,9 @@ describe Mongoid::QueryStringInterface do
       Document.filter_by.should == [other_document, document]
     end
 
-    it 'should use the given sorting options and ignore the default sorting options' do
+    it 'should use the given order_by and ignore the default sorting options' do
       Document.should_not_receive(:default_sorting_options)
-      Document.filter_by('created_at.asc' => nil).should == [document, other_document]
+      Document.filter_by('order_by' => 'created_at.asc').should == [document, other_document]
     end
   end
 
@@ -140,21 +140,29 @@ describe Mongoid::QueryStringInterface do
     it 'should use asc as default if only the attribute name is given' do
       Document.filter_by('order_by' => 'created_at').should == [document, other_document]
     end
-    
-    it 'should use parameters with .desc modifiers to add sort options' do
-      Document.filter_by('created_at.desc' => nil).should == [other_document, document]
-    end
-    
-    it 'should use parameters with desc value to add sort options' do
-      Document.filter_by('created_at' => 'desc').should == [other_document, document]
-    end
-    
-    it 'should use parameters with .asc modifiers to add sort options' do
-      Document.filter_by('created_at.asc' => nil).should == [document, other_document]
-    end
-    
-    it 'should use parameters with asc value to add sort options' do
-      Document.filter_by('created_at' => 'asc').should == [document, other_document]
+
+    context 'with more than one field' do
+      let :another_document do
+        Document.create :title => 'Another Title', :some_integer => 5, :some_float => 5.5, :status => 'published',
+                        :created_at => 2.days.ago.to_time, :tags => ['esportes', 'futebol', 'jabulani', 'flamengo'],
+                        :some_boolean => false, :other_boolean => true, :nil_value => 'not_nil',
+                        :embedded_document => { :name => 'other embedded document',
+                          :tags => ['yup', 'uhu', 'yeah', 'H4', '4H', '4H4', 'H4.1', '4.1H', '4.1H4.1'] }
+      end
+
+      before { another_document }
+
+      it 'should use accept an list of fields to order, separated by "|", using ascending order as default' do
+        Document.filter_by('order_by' => 'created_at|title').should == [document, another_document, other_document]
+      end
+
+      it 'should use accept an list of fields to order, separated by "|", mixing default and given direction' do
+        Document.filter_by('order_by' => 'created_at.desc|title').should == [another_document, other_document, document]
+      end
+
+      it 'should use accept an list of fields to order, separated by "|", using given direction for each' do
+        Document.filter_by('order_by' => 'created_at.desc|title.desc').should == [other_document, another_document, document]
+      end
     end
   end
   
@@ -173,22 +181,6 @@ describe Mongoid::QueryStringInterface do
     
     it 'should ignore order_by parameters' do
       Document.filter_by('title' => document.title, 'order_by' => 'created_at').should == [document]
-    end
-    
-    it 'should ignore parameters with .asc' do
-      Document.filter_by('title' => document.title, 'created_at.asc' => nil).should == [document]
-    end
-    
-    it 'should ignore parameters with .desc' do
-      Document.filter_by('title' => document.title, 'created_at.desc' => nil).should == [document]
-    end
-    
-    it 'should ignore parameters with asc value' do
-      Document.filter_by('title' => document.title, 'created_at' => 'asc').should == [document]
-    end
-    
-    it 'should ignore parameters with desc value' do
-      Document.filter_by('title' => document.title, 'created_at' => 'desc').should == [document]
     end
     
     it 'should ignore controller, action and format parameters' do
@@ -346,13 +338,13 @@ describe Mongoid::QueryStringInterface do
     
     it 'should accept filtering options' do
       context = mock('context', :count => 1)
-      Document.should_receive(:where).with({:status => 'published', :title => document.title}).and_return(context)
+      Document.should_receive(:where).with({'status' => 'published', 'title' => document.title}).and_return(context)
       Document.paginated_collection_with_filter_by(:title => document.title).should == {:total_entries => 1, :total_pages => 1, :per_page => 12, :offset => 0, :previous_page => nil, :current_page => 1, :next_page => nil}
     end
     
     it 'should use pagination options' do
       context = mock('context', :count => 100)
-      Document.should_receive(:where).with({:status => 'published'}).and_return(context)
+      Document.should_receive(:where).with({'status' => 'published'}).and_return(context)
       Document.paginated_collection_with_filter_by(:page => 3, :per_page => 20).should == {:total_entries => 100, :total_pages => 5, :per_page => 20, :offset => 40, :previous_page => 2, :current_page => 3, :next_page => 4}
     end
   end

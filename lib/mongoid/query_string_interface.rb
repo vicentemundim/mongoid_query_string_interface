@@ -9,9 +9,14 @@ module Mongoid
     CONDITIONAL_OPERATORS = [:all, :exists, :gte, :gt, :in, :lte, :lt, :ne, :nin, :size, :near, :within]
     SORTING_OPERATORS = [:asc, :desc]
     OR_OPERATOR = :or
-    
+
     ATTRIBUTE_REGEX = /(.*)\.(#{(CONDITIONAL_OPERATORS + SORTING_OPERATORS + [OR_OPERATOR]).join('|')})/
     PAGER_ATTRIBUTES = [:total_entries, :total_pages, :per_page, :offset, :previous_page, :current_page, :next_page]
+
+    ORDER_BY_PARAMETER = :order_by
+    PAGINATION_PARAMTERS = [:per_page, :page]
+    FRAMEWORK_PARAMETERS = [:controller, :action, :format]
+    RESERVED_PARAMETERS = FRAMEWORK_PARAMETERS + PAGINATION_PARAMTERS + [ORDER_BY_PARAMETER]
 
     PARSERS = [
       Mongoid::QueryStringInterface::Parsers::DateTimeParser.new,
@@ -81,21 +86,15 @@ module Mongoid
 
     protected
       def pagination_options(options)
-        options.reverse_merge default_pagination_options
+        hash_with_indifferent_access(default_pagination_options).merge(options)
       end
   
       def filtering_options(options)
-        default_filtering_options.merge(parse_operators(only_filtering(options)))
+        hash_with_indifferent_access(default_filtering_options).merge(parse_operators(only_filtering(options)))
       end
   
       def sorting_options(options)
-        options = only_sorting(options)
-
-        sorting_options = []
-        sorting_options.concat(parse_order_by(options))
-        sorting_options.concat(parse_sorting(options))      
-    
-        sorting_options.empty? ? default_sorting_options : sorting_options
+        parse_order_by(options) || default_sorting_options
       end
   
       def parse_operators(options)
@@ -180,62 +179,22 @@ module Mongoid
       end
   
       def only_filtering(options)
-        options.except(*only_sorting(options).keys).except(:per_page, :page, :action, :controller, :format, :order_by)
-      end
-  
-      def only_sorting(options)
-        options.inject({}) do |result, item|
-          key, value = item
-          result[key] = value if sorting_parameter?(key, value)
-          result
-        end
-      end
-  
-      def sorting_parameter?(key, value)
-        order_by_parameter?(key) or sorting_key_parameter?(key) or sorting_value_parameter?(value)
-      end
-      
-      def order_by_parameter?(key)
-        key.to_s == 'order_by'
-      end
-      
-      def sorting_key_parameter?(key)
-        key.match(/(.*)\.(#{SORTING_OPERATORS.join('|')})/)
-      end
-      
-      def sorting_value_parameter?(value)
-        value.present? && SORTING_OPERATORS.include?(value.to_sym)
+        options.except(*RESERVED_PARAMETERS)
       end
   
       def parse_order_by(options)
-        sorting_options = []
-    
-        if order_by = options.delete('order_by')
-          if match = order_by.match(/(.*)\.(#{SORTING_OPERATORS.join('|')})/)
-            sorting_options << match[1].to_sym.send(match[2])
-          else
-            sorting_options << order_by.to_sym.asc
+        if options.has_key?('order_by')
+          options['order_by'].split('|').map do |field|
+            sorting_operator_for(field)
           end
         end
-    
-        sorting_options
       end
-  
-      def parse_sorting(options)
-        options.inject([]) do |result, item|
-          key, value = item
-      
-          attribute = attribute_from(key)
-          sorting_operator = sorting_operator_from(key)
 
-          result << attribute.send(sorting_operator || value)        
-          result
-        end
-      end
-  
-      def sorting_operator_from(key)
-        if match = key.match(/.*\.(#{SORTING_OPERATORS.join('|')})/)
-          match[1].to_sym
+      def sorting_operator_for(field)
+        if match = field.match(/(.*)\.(#{SORTING_OPERATORS.join('|')})/)
+          match[1].to_sym.send(match[2])
+        else
+          field.to_sym.asc
         end
       end
   end
