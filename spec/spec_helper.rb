@@ -1,19 +1,20 @@
 begin
+  require 'simplecov'
+  SimpleCov.start do
+    add_filter '/spec/'
+  end
+  SimpleCov.coverage_dir 'coverage'
+rescue LoadError
+  # ignore simplecov in ruby < 1.9
+end
+
+begin
   require 'bundler'
   Bundler.setup
   Bundler.require(:default, :development)
 rescue LoadError
   puts 'Bundler is not installed, you need to gem install it in order to run the specs.'
   exit 1
-end
-
-begin
-  require 'simplecov'
-
-  SimpleCov.start
-  SimpleCov.coverage_dir 'coverage'
-rescue LoadError
-  # ignore simplecov in ruby < 1.9
 end
 
 # Requires supporting files with custom matchers and macros, etc,
