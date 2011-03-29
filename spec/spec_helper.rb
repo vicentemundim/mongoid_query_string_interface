@@ -7,6 +7,15 @@ rescue LoadError
   exit 1
 end
 
+begin
+  require 'simplecov'
+
+  SimpleCov.start
+  SimpleCov.coverage_dir 'coverage'
+rescue LoadError
+  # ignore simplecov in ruby < 1.9
+end
+
 # Requires supporting files with custom matchers and macros, etc,
 # in ./support/ and its subdirectories.
 Dir[File.expand_path('support/**/*.rb', File.dirname(__FILE__))].each { |f| require f }
