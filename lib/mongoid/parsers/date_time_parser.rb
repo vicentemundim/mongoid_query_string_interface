@@ -10,8 +10,6 @@ module Mongoid
         
         def parse(value)
           Time.parse(value)
-        rescue Exception
-          nil
         end
       end
     end
