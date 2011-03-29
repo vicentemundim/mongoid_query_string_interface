@@ -1,30 +1,23 @@
-require File.expand_path(File.join('parsers', 'date_time_parser'), File.dirname(__FILE__))
-require File.expand_path(File.join('parsers', 'number_parser'), File.dirname(__FILE__))
-require File.expand_path(File.join('parsers', 'array_parser'), File.dirname(__FILE__))
-require File.expand_path(File.join('parsers', 'regex_parser'), File.dirname(__FILE__))
-require File.expand_path(File.join('parsers', 'boolean_and_nil_parser'), File.dirname(__FILE__))
+require File.expand_path(File.join('parsers', 'filter_parser'), File.dirname(__FILE__))
+require File.expand_path(File.join('parsers', 'filters_parser'), File.dirname(__FILE__))
 
 module Mongoid
   module QueryStringInterface
-    CONDITIONAL_OPERATORS = [:all, :exists, :gte, :gt, :in, :lte, :lt, :ne, :nin, :size, :near, :within]
+    NORMAL_CONDITIONAL_OPERATORS = [:exists, :gte, :gt, :lte, :lt, :ne, :size, :near, :within]
+    ARRAY_CONDITIONAL_OPERATORS = [:all, :in, :nin]
+    CONDITIONAL_OPERATORS = ARRAY_CONDITIONAL_OPERATORS + NORMAL_CONDITIONAL_OPERATORS
     SORTING_OPERATORS = [:asc, :desc]
     OR_OPERATOR = :or
 
-    ATTRIBUTE_REGEX = /(.*)\.(#{(CONDITIONAL_OPERATORS + SORTING_OPERATORS + [OR_OPERATOR]).join('|')})/
+    ATTRIBUTE_REGEX = /^(.*)\.(#{(CONDITIONAL_OPERATORS + SORTING_OPERATORS + [OR_OPERATOR]).join('|')})$/
+    OPERATOR_REGEX = /^.*\.(#{Mongoid::QueryStringInterface::CONDITIONAL_OPERATORS.join('|')})$/
+
     PAGER_ATTRIBUTES = [:total_entries, :total_pages, :per_page, :offset, :previous_page, :current_page, :next_page]
 
     ORDER_BY_PARAMETER = :order_by
     PAGINATION_PARAMTERS = [:per_page, :page]
     FRAMEWORK_PARAMETERS = [:controller, :action, :format]
     RESERVED_PARAMETERS = FRAMEWORK_PARAMETERS + PAGINATION_PARAMTERS + [ORDER_BY_PARAMETER]
-
-    PARSERS = [
-      Mongoid::QueryStringInterface::Parsers::DateTimeParser.new,
-      Mongoid::QueryStringInterface::Parsers::NumberParser.new,
-      Mongoid::QueryStringInterface::Parsers::ArrayParser.new,
-      Mongoid::QueryStringInterface::Parsers::RegexParser.new,
-      Mongoid::QueryStringInterface::Parsers::BooleanAndNilParser.new
-    ]
     
     def filter_by(params={})
       params = hash_with_indifferent_access(params)
@@ -72,17 +65,9 @@ module Mongoid
       end
     end
 
-    def default_filtering_options
-      {}
-    end
-
-    def default_sorting_options
-      []
-    end
-
-    def default_pagination_options
-      { :per_page => 12, :page => 1 }
-    end
+    def default_filtering_options; {}; end
+    def default_sorting_options; []; end
+    def default_pagination_options; { :per_page => 12, :page => 1 }; end
 
     protected
       def pagination_options(options)
@@ -90,92 +75,18 @@ module Mongoid
       end
   
       def filtering_options(options)
-        hash_with_indifferent_access(default_filtering_options).merge(parse_operators(only_filtering(options)))
+        Mongoid::QueryStringInterface::Parsers::FiltersParser.new(
+          only_filtering(options),
+          default_filtering_options
+        ).parse
       end
   
       def sorting_options(options)
         parse_order_by(options) || default_sorting_options
       end
   
-      def parse_operators(options)
-        options.inject({}) do |result, item|
-          key, value = item
-      
-          attribute = attribute_from(key)
-          
-          if or_attribute?(attribute)
-            parse_or_attribute(attribute, key, value, result)
-          else
-            parse_normal_attribute(attribute, key, value, result)
-          end
-        end
-      end
-      
-      def parse_or_attribute(attribute, key, value, result)
-        result["$or"] = ::JSON.parse(unescape(value)).map do |filters|
-          parse_operators(filters)
-        end
-        
-        result
-      end
-      
-      def parse_normal_attribute(attribute, key, value, result)
-        operator = operator_from(key)
-        value = parse_value(value, operator)
-
-        if operator
-          filter = { operator => value }
-
-          if result.has_key?(attribute)
-            result[attribute].merge!(filter)
-          else
-            result[attribute] = filter
-          end
-        else
-          result[attribute] = value
-        end
-    
-        result
-      end
-  
-      def attribute_from(key)
-        if key =~ ATTRIBUTE_REGEX
-          $1.to_sym
-        else
-          key.to_sym
-        end
-      end
-      
-      def or_attribute?(attribute)
-        OR_OPERATOR == attribute
-      end
-  
-      def operator_from(key)
-        if match = key.match(/.*\.(#{CONDITIONAL_OPERATORS.join('|')})/)
-          "$#{match[1]}".to_sym
-        end
-      end
-      
-      def unescape(value)
-        URI.unescape(value)
-      end
-  
-      def parse_value(value, operator)
-        if value.is_a?(String)
-          value = unescape(value)
-          
-          PARSERS.each do |parser|
-            return parser.parse(value) if parser.parseable?(value, operator)
-          end
-        
-          return nil
-        else
-          value
-        end
-      end
-  
       def hash_with_indifferent_access(params)
-        params.is_a?(HashWithIndifferentAccess) ? params : HashWithIndifferentAccess.new(params)
+        params.is_a?(HashWithIndifferentAccess) ? params : params.with_indifferent_access
       end
   
       def only_filtering(options)

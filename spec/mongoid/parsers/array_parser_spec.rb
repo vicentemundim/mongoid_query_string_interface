@@ -1,9 +1,9 @@
 require 'spec_helper'
 
 describe Mongoid::QueryStringInterface::Parsers::ArrayParser do
-  Mongoid::QueryStringInterface::Parsers::ArrayParser::ARRAY_CONDITIONAL_OPERATORS.each do |operator|
-    it "should be parseable when operator is #{operator}" do
-      should be_parseable('any-value', operator)
+  Mongoid::QueryStringInterface::ARRAY_CONDITIONAL_OPERATORS.each do |operator|
+    it "should be parseable when operator is $#{operator}" do
+      should be_parseable('any-value', "$#{operator}")
     end
   end
   

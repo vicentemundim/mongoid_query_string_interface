@@ -3,10 +3,9 @@ module Mongoid
     module Parsers
       class ArrayParser
         ARRAY_SEPARATOR = '|'
-        ARRAY_CONDITIONAL_OPERATORS = [:$all, :$in, :$nin]
   
         def parseable?(value, operator)
-          operator && ARRAY_CONDITIONAL_OPERATORS.include?(operator.to_sym)
+          operator && conditional_operators.include?(operator)
         end
   
         def parse(value)
@@ -18,6 +17,10 @@ module Mongoid
         private
           def regex_parser
             @regex_parser ||= RegexParser.new
+          end
+
+          def conditional_operators
+            @conditional_operators ||= Mongoid::QueryStringInterface::ARRAY_CONDITIONAL_OPERATORS.map { |o| "$#{o}" }
           end
       end
     end
