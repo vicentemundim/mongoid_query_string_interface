@@ -68,38 +68,6 @@ describe Mongoid::QueryStringInterface::Parsers::FiltersParser do
           subject.parse.should == default_filters.merge({ 'count' => { '$gte' => 1, '$lt' => 10 } })
         end
       end
-
-      describe "optimizations for array operators" do
-        context "when only one tag is given to $all" do
-          let :filters do
-            { 'tags.all' => 'esportes' }.with_indifferent_access
-          end
-
-          it "should convert to a $in parameter" do
-            subject.parse.should == default_filters.merge('tags' => { '$in' => ['esportes'] })
-          end
-
-          context "and there is another tags parameter" do
-            let :filters do
-              { 'tags.all' => 'esportes', 'tags.nin' => 'futebol' }.with_indifferent_access
-            end
-
-            it "should convert to a $in parameter" do
-              subject.parse.should == default_filters.merge('tags' => { '$in' => ['esportes'], '$nin' => ['futebol'] })
-            end
-          end
-        end
-
-        context "when more than one tag is given to $all" do
-          let :filters do
-            { 'tags.all' => 'esportes|Flamengo' }.with_indifferent_access
-          end
-
-          it "should not modify the $all parameter value" do
-            subject.parse.should == default_filters.merge('tags' => { '$all' => ['esportes', 'Flamengo'] })
-          end
-        end
-      end
     end
 
     describe "with $or operator" do

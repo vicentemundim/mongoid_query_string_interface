@@ -326,33 +326,17 @@ describe Mongoid::QueryStringInterface::Parsers::FilterParser do
 
     Mongoid::QueryStringInterface::ARRAY_CONDITIONAL_OPERATORS.each do |operator|
       context "with array operator $#{operator}" do
-        if operator == :all
-          context "with a single value" do
-            subject do
-              described_class.new("tags.all", 'Some Value')
-            end
-
-            it "should return the field name as attribute" do
-              subject.attribute.should == 'tags'
-            end
-
-            it "should return the value as an array, using the operator $in instead of all" do
-              subject.value.should == { "$in" => ['Some Value'] }
-            end
+        context "with a single value" do
+          subject do
+            described_class.new("tags.#{operator}", 'Some Value')
           end
-        else
-          context "with a single value" do
-            subject do
-              described_class.new("tags.#{operator}", 'Some Value')
-            end
 
-            it "should return the field name as attribute" do
-              subject.attribute.should == 'tags'
-            end
+          it "should return the field name as attribute" do
+            subject.attribute.should == 'tags'
+          end
 
-            it "should return the value as an array, using the operator" do
-              subject.value.should == { "$#{operator}" => ['Some Value'] }
-            end
+          it "should return the value as an array, using the operator" do
+            subject.value.should == { "$#{operator}" => ['Some Value'] }
           end
         end
 
@@ -379,6 +363,40 @@ describe Mongoid::QueryStringInterface::Parsers::FilterParser do
             subject.value.should == { "$#{operator}" => ['Some Value', 'Some Other Value', 'Another value'] }
           end
         end
+      end
+    end
+  end
+
+  describe "include?" do
+    describe "or filters" do
+      subject do
+        described_class.new("or", '[{"title": "Some Title"}, {"count.gte": "1", "count.lt": "10"}, {"tags.all": "Some tag|Other tag", "tags.nin": ["A tag", "Another tag"]}]')
+      end
+
+      let :other_filter do
+        described_class.new("tags.all", 'Other filter tag')
+      end
+
+      it "should include other filter if they have an array conditional operator and their attribute is used in one of the or clauses" do
+        subject.should include(other_filter)
+      end
+
+      it "should merge other filter if they have an array conditional operator and their attribute is used in one of the or clauses" do
+        subject.merge(other_filter).should == [{'title' => 'Some Title', 'tags' => {'$all' => ['Other filter tag']}}, {'count' => { '$gte' => 1, '$lt' => 10 }, 'tags' => {'$all' => ['Other filter tag']}}, {'tags' => { '$all' => ['Some tag', 'Other tag', 'Other filter tag'], '$nin' => ["A tag", "Another tag"] }}]
+      end
+    end
+
+    describe "normal filters" do
+      subject do
+        described_class.new("tags.all", 'Some Value|Some Other Value|Another value')
+      end
+
+      let :other_filter do
+        described_class.new("tags.all", 'Some tag')
+      end
+
+      it "should not include other filters" do
+        subject.should_not include(other_filter)
       end
     end
   end

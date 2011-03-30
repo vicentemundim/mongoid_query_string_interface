@@ -204,6 +204,18 @@ describe Mongoid::QueryStringInterface do
     end
     
     context 'with conditional operators' do
+      let :default_parameters do
+        Document.default_filtering_options.inject({}) { |r, i| k, v = i; r[k.to_s] = v; r }
+      end
+
+      let :criteria do
+        criteria = mock(Mongoid::Criteria)
+        criteria.stub!(:where).and_return(criteria)
+        criteria.stub!(:order_by).and_return(criteria)
+        criteria.stub!(:paginate).and_return(criteria)
+        criteria
+      end
+
       it 'should use it when given as the last portion of attribute name' do
         Document.filter_by('title.ne' => 'Some Other Title').should == [document]
       end
@@ -284,18 +296,6 @@ describe Mongoid::QueryStringInterface do
                           :created_at => 5.days.ago.to_time, :tags => ['esportes', 'basquete', 'flamengo', 'rede globo', 'esporte espetacular']
         end
         
-        let :default_parameters do
-          Document.default_filtering_options.inject({}) { |r, i| k, v = i; r[k.to_s] = v; r }
-        end
-
-        let :criteria do
-          criteria = mock(Mongoid::Criteria)
-          criteria.stub!(:where).and_return(criteria)
-          criteria.stub!(:order_by).and_return(criteria)
-          criteria.stub!(:paginate).and_return(criteria)
-          criteria
-        end
-
         it 'should convert values into arrays for operator $all' do
           Document.filter_by('tags.all' => document.tags.join('|')).should == [document]
         end
@@ -325,33 +325,6 @@ describe Mongoid::QueryStringInterface do
           document_with_similar_tags
           Document.filter_by('tags.all' => 'esportes|basquete', 'tags.nin' => 'rede globo|esporte espetacular').should == [document]
         end
-
-        context "when only one tag is given to $all" do
-          it "should convert to a $in parameter for optimization" do
-            Document.should_receive(:where)
-                    .with(default_parameters.merge('tags' => { '$in' => ['esportes'] }))
-                    .and_return(criteria)
-            Document.filter_by('tags.all' => 'esportes')
-          end
-
-          context "and there is another tags parameter" do
-            it "should convert to a $in parameter for optimization" do
-              Document.should_receive(:where)
-                      .with(default_parameters.merge('tags' => { '$in' => ['esportes'], '$nin' => ['futebol'] }))
-                      .and_return(criteria)
-              Document.filter_by('tags.all' => 'esportes', 'tags.nin' => 'futebol')
-            end
-          end
-        end
-
-        context "when more than one tag is given to $all" do
-          it "should not modify the $all parameter value" do
-            Document.should_receive(:where)
-                    .with(default_parameters.merge('tags' => { '$all' => ['esportes', 'Flamengo'] }))
-                    .and_return(criteria)
-            Document.filter_by('tags.all' => 'esportes|Flamengo')
-          end
-        end
       end
       
       context "with 'or' attribute" do
@@ -365,6 +338,20 @@ describe Mongoid::QueryStringInterface do
         
         it "should accept any valid mongodb query" do
           Document.filter_by('or' => '[{"tags.all": ["flamengo", "basquete"]}, {"tags": {"$all" : ["flamengo", "jabulani"]}}]').should == [other_document, document]
+        end
+
+        context "with other parameters outside $or" do
+          context "that use array conditional operators" do
+            context "with single values" do
+              it "should merge outside parameters into $or clauses" do
+                Document.should_receive(:where)
+                        .with(default_parameters.merge('$or' => [{'tags' => { "$all" => ['basquete', 'flamengo'] }}, {'tags' => { "$all" => ['jabulani', 'flamengo'] }}]))
+                        .and_return(criteria)
+
+                Document.filter_by('tags.all' => 'flamengo', 'or' => '[{"tags.all": ["basquete"]}, {"tags.all" : ["jabulani"]}]')
+              end
+            end
+          end
         end
       end
     end
