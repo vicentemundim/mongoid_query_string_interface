@@ -10,6 +10,8 @@ module Mongoid
   module QueryStringInterface
     module Parsers
       class FilterParser
+        include Mongoid::QueryStringInterface::Helpers
+
         attr_reader :raw_attribute, :raw_value
 
         PARSERS = [
@@ -20,13 +22,14 @@ module Mongoid
           Mongoid::QueryStringInterface::Parsers::BooleanAndNilParser.new
         ]
 
-        def initialize(raw_attribute, raw_value)
+        def initialize(raw_attribute, raw_value, attributes_to_replace={})
           @raw_attribute = raw_attribute
           @raw_value = raw_value
+          @attributes_to_replace = attributes_to_replace
         end
 
         def attribute
-          @attribute ||= parsed_attribute
+          @attribute ||= replace_attribute(parsed_attribute, @attributes_to_replace).to_s
         end
 
         def value
@@ -120,7 +123,7 @@ module Mongoid
             raise "$or query filters must be given as an array of hashes" unless valid_or_filters?(raw_or_data)
 
             raw_or_data.map do |filters|
-              FiltersParser.new(filters)
+              FiltersParser.new(filters, {}, @attributes_to_replace)
             end
           end
 

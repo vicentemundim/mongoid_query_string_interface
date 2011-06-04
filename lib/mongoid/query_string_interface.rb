@@ -1,8 +1,11 @@
+require File.expand_path(File.join('helpers'), File.dirname(__FILE__))
 require File.expand_path(File.join('parsers', 'filter_parser'), File.dirname(__FILE__))
 require File.expand_path(File.join('parsers', 'filters_parser'), File.dirname(__FILE__))
 
 module Mongoid
   module QueryStringInterface
+    include Mongoid::QueryStringInterface::Helpers
+
     NORMAL_CONDITIONAL_OPERATORS = [:exists, :gte, :gt, :lte, :lt, :ne, :size, :near, :within]
     ARRAY_CONDITIONAL_OPERATORS = [:all, :in, :nin]
     CONDITIONAL_OPERATORS = ARRAY_CONDITIONAL_OPERATORS + NORMAL_CONDITIONAL_OPERATORS
@@ -17,8 +20,9 @@ module Mongoid
     ORDER_BY_PARAMETER = :order_by
     PAGINATION_PARAMTERS = [:per_page, :page]
     FRAMEWORK_PARAMETERS = [:controller, :action, :format]
-    RESERVED_PARAMETERS = FRAMEWORK_PARAMETERS + PAGINATION_PARAMTERS + [ORDER_BY_PARAMETER]
-    
+    CONTROL_PARAMETERS = [:disable_default_filters]
+    RESERVED_PARAMETERS = FRAMEWORK_PARAMETERS + PAGINATION_PARAMTERS + [ORDER_BY_PARAMETER] + CONTROL_PARAMETERS
+
     def filter_by(params={})
       params = hash_with_indifferent_access(params)
       filter_only_and_order_by(params).paginate(pagination_options(params))
@@ -55,10 +59,10 @@ module Mongoid
 
     def paginated_collection_with_filter_by(params={})
       params = hash_with_indifferent_access(params)
-  
+
       pagination = pagination_options(params)
       pager = WillPaginate::Collection.new pagination[:page], pagination[:per_page], where(filtering_options(params)).count
-  
+
       PAGER_ATTRIBUTES.inject({}) do |result, attr|
         result[attr] = pager.send(attr)
         result
@@ -68,31 +72,30 @@ module Mongoid
     def default_filtering_options; {}; end
     def default_sorting_options; []; end
     def default_pagination_options; { :per_page => 12, :page => 1 }; end
+    def sorting_attributes_to_replace; {} end
+    def filtering_attributes_to_replace; {} end
 
     protected
       def pagination_options(options)
         hash_with_indifferent_access(default_pagination_options).merge(options)
       end
-  
+
       def filtering_options(options)
         Mongoid::QueryStringInterface::Parsers::FiltersParser.new(
           only_filtering(options),
-          default_filtering_options
+          options.has_key?(:disable_default_filters) ? {} : default_filtering_options,
+          filtering_attributes_to_replace
         ).parse
       end
-  
+
       def sorting_options(options)
         parse_order_by(options) || default_sorting_options
       end
-  
-      def hash_with_indifferent_access(params)
-        params.is_a?(HashWithIndifferentAccess) ? params : params.with_indifferent_access
-      end
-  
+
       def only_filtering(options)
         options.except(*RESERVED_PARAMETERS)
       end
-  
+
       def parse_order_by(options)
         if options.has_key?('order_by')
           options['order_by'].split('|').map do |field|
@@ -103,9 +106,9 @@ module Mongoid
 
       def sorting_operator_for(field)
         if match = field.match(/(.*)\.(#{SORTING_OPERATORS.join('|')})/)
-          match[1].to_sym.send(match[2])
+          replace_attribute(match[1], sorting_attributes_to_replace).to_sym.send(match[2])
         else
-          field.to_sym.asc
+          replace_attribute(field, sorting_attributes_to_replace).to_sym.asc
         end
       end
   end

@@ -4,9 +4,10 @@ module Mongoid
       class FiltersParser
         attr_reader :filters, :default_filters
 
-        def initialize(filters, default_filters={})
+        def initialize(filters, default_filters={}, attributes_to_replace={})
           @filters = filters.with_indifferent_access
           @default_filters = default_filters.with_indifferent_access
+          @attributes_to_replace = attributes_to_replace.with_indifferent_access
         end
 
         def parse
@@ -15,7 +16,7 @@ module Mongoid
 
         def filter_parsers
           @filter_parsers ||= filters.map do |raw_attribute, raw_value|
-            FilterParser.new(raw_attribute, raw_value)
+            FilterParser.new(raw_attribute, raw_value, @attributes_to_replace)
           end
         end
 
