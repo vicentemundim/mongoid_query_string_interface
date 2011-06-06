@@ -22,14 +22,15 @@ module Mongoid
           Mongoid::QueryStringInterface::Parsers::BooleanAndNilParser.new
         ]
 
-        def initialize(raw_attribute, raw_value, attributes_to_replace={})
+        def initialize(raw_attribute, raw_value, attributes_to_replace={}, raw_params={})
           @raw_attribute = raw_attribute
           @raw_value = raw_value
           @attributes_to_replace = attributes_to_replace
+          @raw_params = raw_params
         end
 
         def attribute
-          @attribute ||= replace_attribute(parsed_attribute, @attributes_to_replace).to_s
+          @attribute ||= replaced_attribute_name(parsed_attribute, @attributes_to_replace).to_s
         end
 
         def value
@@ -90,10 +91,10 @@ module Mongoid
               if or_attribute?
                 parsed_json_value
               else
-                { operator => parsed_value }
+                { operator => replaced_attribute_value(parsed_attribute, parsed_value, @attributes_to_replace, @raw_params) }
               end
             else
-              parsed_value
+              replaced_attribute_value(parsed_attribute, parsed_value, @attributes_to_replace, @raw_params)
             end
           end
 
@@ -123,7 +124,7 @@ module Mongoid
             raise "$or query filters must be given as an array of hashes" unless valid_or_filters?(raw_or_data)
 
             raw_or_data.map do |filters|
-              FiltersParser.new(filters, {}, @attributes_to_replace)
+              FiltersParser.new(filters, {}, @attributes_to_replace, @raw_params)
             end
           end
 
@@ -146,6 +147,7 @@ module Mongoid
               "$#{$1}"
             end
           end
+
       end
     end
   end

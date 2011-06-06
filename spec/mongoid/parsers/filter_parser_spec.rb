@@ -400,4 +400,44 @@ describe Mongoid::QueryStringInterface::Parsers::FilterParser do
       end
     end
   end
+
+  describe "replace attribute and value" do
+
+    let :attributes_to_replace do
+      {:names => :tags}
+    end
+
+    let :attributes_to_replace_with_hash do
+      {
+        :names => {:to => :tags_downcase, :convert_value_to => Proc.new { |v| v.map{ |value| value.downcase } } },
+        :status => {:to => :status_for_product, :convert_value_to => Proc.new { |v, raw_params| v == 'published' && raw_params[:product_id] != nil ? "published_for_product" : v } }
+      }
+    end
+
+    it "should replace the raw attribute for the one in the hash parameter attributes_to_replace" do
+      instance = described_class.new("names.all", 'Some Value|Some Other Value|Another value', attributes_to_replace)
+      instance.attribute.should == "tags"
+    end
+
+    it "should replace the raw attribute for the one in the hash parameter attributes_to_replace, using the :to key" do
+      instance = described_class.new("names.all", 'Some Value|Some Other Value|Another value', attributes_to_replace_with_hash)
+      instance.attribute.should == "tags_downcase"
+    end
+
+    it "should use the raw value if attributes_to_replace does not have a hash for this attribute" do
+      instance = described_class.new("names.all", 'Some Value|Some Other Value|Another value', attributes_to_replace)
+      instance.value.should == { "$all" => ['Some Value', 'Some Other Value', 'Another value'] }
+    end
+
+    it "should replace the raw value for the result of given proc in the :convert_value_to key" do
+      instance = described_class.new("names.all", 'Some Value|Some Other Value|Another value', attributes_to_replace_with_hash)
+      instance.value.should == { "$all" => ['some value', 'some other value', 'another value'] }
+    end
+
+    it "should replace the raw value for the result of given proc in the :convert_value_to key, using other given params" do
+      instance = described_class.new("status", 'published', attributes_to_replace_with_hash, {:product_id => 1})
+      instance.value.should == 'published_for_product'
+    end
+
+  end
 end

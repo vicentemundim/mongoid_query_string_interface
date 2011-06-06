@@ -2,21 +2,29 @@ module Mongoid
   module QueryStringInterface
     module Parsers
       class FiltersParser
+        include Mongoid::QueryStringInterface::Helpers
+
         attr_reader :filters, :default_filters
 
-        def initialize(filters, default_filters={}, attributes_to_replace={})
+        def initialize(filters, default_filters={}, attributes_to_replace={}, raw_filters=nil)
           @filters = filters.with_indifferent_access
           @default_filters = default_filters.with_indifferent_access
           @attributes_to_replace = attributes_to_replace.with_indifferent_access
+          @raw_filters = raw_filters.nil? ? @filters : raw_filters.with_indifferent_access
         end
 
         def parse
-          default_filters.merge(parsed_filters)
+          result = default_filters.inject({}) do |result, item|
+            raw_attribute, raw_value = item
+            result[replaced_attribute_name(raw_attribute, @attributes_to_replace).to_s] = replaced_attribute_value(raw_attribute, raw_value, @attributes_to_replace, @raw_filters)
+            result
+          end
+          result.merge(parsed_filters)
         end
 
         def filter_parsers
           @filter_parsers ||= filters.map do |raw_attribute, raw_value|
-            FilterParser.new(raw_attribute, raw_value, @attributes_to_replace)
+            FilterParser.new(raw_attribute, raw_value, @attributes_to_replace, @raw_filters)
           end
         end
 
