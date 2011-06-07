@@ -18,7 +18,7 @@ class Document
   end
 
   def self.default_sorting_options
-    [:created_at.desc]
+    [:created_at.desc, :updated_at.asc]
   end
 
   def self.filtering_attributes_to_replace
@@ -26,7 +26,7 @@ class Document
   end
 
   def self.sorting_attributes_to_replace
-    { :fullnames => :tags }
+    { :fullnames => :tags, :updated_at => :updated_at_sortable}
   end
 end
 
@@ -409,6 +409,20 @@ describe Mongoid::QueryStringInterface do
           Document.stub!(:replace_attribute).with('fullnames', Document.sorting_attributes_to_replace).and_return(new_attribute)
           criteria.should_receive(:order_by).with(order).and_return(criteria)
           Document.filter_by('order_by' => 'fullnames.desc')
+        end
+
+        it "should use the replace attribute for the default sorting parameters with modifiers" do
+          updated_order = :updated_at_sortable.asc
+          created_order = :created_at_sortable.desc
+          update_attribute = 'updated_at_sortable'
+          update_attribute.stub_chain(:to_sym, :asc).and_return(updated_order)
+          created_attribute = 'created_at_sortable'
+          created_attribute.stub_chain(:to_sym, :desc).and_return(created_order)
+          Document.stub!(:where).and_return(criteria)
+          Document.stub!(:replace_attribute).with(:updated_at, Document.sorting_attributes_to_replace).and_return(update_attribute)
+          Document.stub!(:replace_attribute).with(:created_at, Document.sorting_attributes_to_replace).and_return(created_attribute)
+          criteria.should_receive(:order_by).with(created_order, updated_order).and_return(criteria)
+          Document.filter_by('tags.all' => 'flamengo')
         end
       end
     end

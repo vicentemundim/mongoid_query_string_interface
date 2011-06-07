@@ -89,7 +89,7 @@ module Mongoid
       end
 
       def sorting_options(options)
-        parse_order_by(options) || default_sorting_options
+        parse_order_by(options) || default_sorting_options.map { |field| sorting_operator_for(field) }
       end
 
       def only_filtering(options)
@@ -105,7 +105,9 @@ module Mongoid
       end
 
       def sorting_operator_for(field)
-        if match = field.match(/(.*)\.(#{SORTING_OPERATORS.join('|')})/)
+        if field.is_a?(Mongoid::Criterion::Complex)
+          replace_attribute(field.key, sorting_attributes_to_replace).to_sym.send(field.operator)
+        elsif match = field.match(/(.*)\.(#{SORTING_OPERATORS.join('|')})/)
           replace_attribute(match[1], sorting_attributes_to_replace).to_sym.send(match[2])
         else
           replace_attribute(field, sorting_attributes_to_replace).to_sym.asc
