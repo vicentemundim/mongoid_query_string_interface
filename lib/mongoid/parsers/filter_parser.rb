@@ -77,7 +77,9 @@ module Mongoid
 
         private
           def parsed_attribute
-            if or_attribute?
+            if raw_attribute.is_a?(Mongoid::Criterion::Complex)
+              raw_attribute.key.to_s
+            elsif or_attribute?
               '$or'
             elsif raw_attribute =~ Mongoid::QueryStringInterface::ATTRIBUTE_REGEX
               $1
@@ -141,7 +143,9 @@ module Mongoid
           end
 
           def operator_from(attribute)
-            if or_attribute?
+            if attribute.is_a?(Mongoid::Criterion::Complex)
+              "$#{attribute.operator}"
+            elsif or_attribute?
               '$or'
             elsif attribute =~ Mongoid::QueryStringInterface::OPERATOR_REGEX
               "$#{$1}"
