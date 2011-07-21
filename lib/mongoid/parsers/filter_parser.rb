@@ -15,9 +15,9 @@ module Mongoid
         attr_reader :raw_attribute, :raw_value
 
         PARSERS = [
+          Mongoid::QueryStringInterface::Parsers::ArrayParser.new,
           Mongoid::QueryStringInterface::Parsers::DateTimeParser.new,
           Mongoid::QueryStringInterface::Parsers::NumberParser.new,
-          Mongoid::QueryStringInterface::Parsers::ArrayParser.new,
           Mongoid::QueryStringInterface::Parsers::RegexParser.new,
           Mongoid::QueryStringInterface::Parsers::BooleanAndNilParser.new
         ]

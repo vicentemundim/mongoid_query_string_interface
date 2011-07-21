@@ -329,6 +329,18 @@ describe Mongoid::QueryStringInterface do
           Document.filter_by('tags.nin' => 'jabulani').should == [document]
         end
 
+        it "should properly use the $in operator when only one integer value is given" do
+          Document.filter_by("some_integer.in" => "1").should == [document]
+        end
+
+        it "should properly use the $in operator when only one float value is given" do
+          Document.filter_by("some_float.in" => "1.1").should == [document]
+        end
+
+        it "should properly use the $in operator when only one date time value is given" do
+          Document.filter_by("created_at.in" => document.created_at.iso8601).should == [document]
+        end
+
         it 'should accept different conditional operators for the same attribute' do
           document_with_similar_tags
           Document.filter_by('tags.all' => 'esportes|basquete', 'tags.nin' => 'rede globo|esporte espetacular').should == [document]
