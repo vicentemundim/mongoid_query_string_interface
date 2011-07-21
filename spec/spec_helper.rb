@@ -9,13 +9,14 @@ rescue LoadError
 end
 
 begin
-  require 'bundler'
-  Bundler.setup
+  require 'bundler/setup'
   Bundler.require(:default, :development)
 rescue LoadError
   puts 'Bundler is not installed, you need to gem install it in order to run the specs.'
   exit 1
 end
+
+require 'mongoid'
 
 # Requires supporting files with custom matchers and macros, etc,
 # in ./support/ and its subdirectories.
