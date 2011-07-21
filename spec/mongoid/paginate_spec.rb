@@ -31,6 +31,10 @@ describe Mongoid::Paginate do
       Document.paginate(:per_page => 5, :page => 3).should == documents[10..14]
     end
 
+    it "should return an array with the specified documents per page as string of the specified page as string" do
+      Document.paginate(:per_page => '5', :page => '3').should == documents[10..14]
+    end
+
     it "should return an array with the total entries" do
       Document.paginate(:per_page => 5, :page => 3).total_entries.should == total_entries
     end
