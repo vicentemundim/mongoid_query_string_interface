@@ -1,10 +1,12 @@
 require File.expand_path(File.join('helpers'), File.dirname(__FILE__))
+require File.expand_path(File.join('paginate'), File.dirname(__FILE__))
 require File.expand_path(File.join('parsers', 'filter_parser'), File.dirname(__FILE__))
 require File.expand_path(File.join('parsers', 'filters_parser'), File.dirname(__FILE__))
 
 module Mongoid
   module QueryStringInterface
     include Mongoid::QueryStringInterface::Helpers
+    include Mongoid::Paginate unless instance_methods(:false).include?(:paginate)
 
     NORMAL_CONDITIONAL_OPERATORS = [:exists, :gte, :gt, :lte, :lt, :ne, :size, :near, :within]
     ARRAY_CONDITIONAL_OPERATORS = [:all, :in, :nin]

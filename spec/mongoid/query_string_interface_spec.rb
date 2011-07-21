@@ -445,5 +445,4 @@ describe Mongoid::QueryStringInterface do
       Document.paginated_collection_with_filter_by(:page => 3, :per_page => 20).should == {:total_entries => 100, :total_pages => 5, :per_page => 20, :offset => 40, :previous_page => 2, :current_page => 3, :next_page => 4}
     end
   end
-
 end
