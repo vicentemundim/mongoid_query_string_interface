@@ -41,7 +41,7 @@ module Mongoid
         pager
       end
 
-      return { :pager => pager, model_name.human.underscore.pluralize.to_sym => result }
+      return { :pager => pager, collection_name_in_pagination_result => result }
     end
 
     def filter_with_optimized_pagination_by(params={})
@@ -74,11 +74,25 @@ module Mongoid
       end
     end
 
-    def default_filtering_options; {}; end
-    def default_sorting_options; []; end
-    def default_pagination_options; { :per_page => 12, :page => 1 }; end
-    def sorting_attributes_to_replace; {} end
-    def filtering_attributes_to_replace; {} end
+    def default_filtering_options
+      {}
+    end
+
+    def default_sorting_options
+      []
+    end
+
+    def default_pagination_options
+      { :per_page => 12, :page => 1 }
+    end
+
+    def sorting_attributes_to_replace
+      {}
+    end
+
+    def filtering_attributes_to_replace
+      {}
+    end
 
     protected
       def pagination_options(options)
@@ -117,6 +131,10 @@ module Mongoid
         else
           replace_attribute(field, sorting_attributes_to_replace).to_sym.asc
         end
+      end
+
+      def collection_name_in_pagination_result
+        model_name.human.underscore.pluralize.to_sym
       end
   end
 end
