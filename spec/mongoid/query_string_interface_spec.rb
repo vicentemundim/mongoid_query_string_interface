@@ -30,6 +30,13 @@ class Document
   end
 end
 
+class SimpleDocument
+  include Mongoid::Document
+  extend Mongoid::QueryStringInterface
+
+  field :title
+end
+
 class EmbeddedDocument
   include Mongoid::Document
 
@@ -59,6 +66,28 @@ describe Mongoid::QueryStringInterface do
   before :each do
     # creates the document and other document
     document and other_document
+  end
+
+  describe "defaults" do
+    it "should return an empty hash as the default filtering options" do
+      SimpleDocument.default_filtering_options.should == {}
+    end
+
+    it "should return an empty array as the default sorting options" do
+      SimpleDocument.default_sorting_options.should == []
+    end
+
+    it "should return hash with per_page => 12 and page => 1 for the default pagination options" do
+      SimpleDocument.default_pagination_options.should == { :per_page => 12, :page => 1 }
+    end
+
+    it "should return an empty hash as the default sorting attributes to replace" do
+      SimpleDocument.sorting_attributes_to_replace.should == {}
+    end
+
+    it "should return an empty hash as the default filtering attributes to replace" do
+      SimpleDocument.filtering_attributes_to_replace.should == {}
+    end
   end
 
   context 'with default filtering options' do
