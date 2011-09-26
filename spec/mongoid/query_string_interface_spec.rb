@@ -129,6 +129,10 @@ describe Mongoid::QueryStringInterface do
       @context.stub!(:order_by).and_return(@context)
     end
 
+    it "should add a paginate method to the document" do
+      Document.should respond_to(:paginate)
+    end
+
     it 'should paginate the result by default' do
       @context.should_receive(:paginate).with('page' => 1, 'per_page' => 12)
       Document.filter_by
@@ -137,6 +141,21 @@ describe Mongoid::QueryStringInterface do
     it 'should use the page and per_page parameters if they are given' do
       @context.should_receive(:paginate).with('page' => 3, 'per_page' => 20)
       Document.filter_by 'page' => 3, 'per_page' => 20
+    end
+
+    context "of a document that already has a paginate method" do
+      class SelfPaginatedDocument
+        def self.paginate(options)
+          options
+        end
+
+        extend Mongoid::QueryStringInterface
+      end
+
+      it "should not change the .paginate method of that document" do
+        options = { :per_page => 5, :page => 3 }
+        SelfPaginatedDocument.paginate(options).should == options
+      end
     end
   end
 
