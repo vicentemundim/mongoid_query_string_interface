@@ -47,7 +47,7 @@ class EmbeddedDocument
 end
 
 describe Mongoid::QueryStringInterface do
-  let :document do
+  let! :document do
     Document.create :title => 'Some Title', :some_integer => 1, :some_float => 1.1, :status => 'published',
                     :created_at => 5.days.ago.to_time, :tags => ['esportes', 'basquete', 'flamengo'],
                     :some_boolean => true, :other_boolean => false, :nil_value => nil,
@@ -55,17 +55,12 @@ describe Mongoid::QueryStringInterface do
                       :tags => ['bar', 'foo', 'yeah'] }
   end
 
-  let :other_document do
+  let! :other_document do
     Document.create :title => 'Some Other Title', :some_integer => 2, :some_float => 2.2, :status => 'published',
                     :created_at => 2.days.ago.to_time, :tags => ['esportes', 'futebol', 'jabulani', 'flamengo'],
                     :some_boolean => false, :other_boolean => true, :nil_value => 'not_nil',
                     :embedded_document => { :name => 'other embedded document',
                       :tags => ['yup', 'uhu', 'yeah', 'H4', '4H', '4H4', 'H4.1', '4.1H', '4.1H4.1'] }
-  end
-
-  before :each do
-    # creates the document and other document
-    document and other_document
   end
 
   describe "defaults" do
@@ -103,7 +98,6 @@ describe Mongoid::QueryStringInterface do
     end
 
     it 'should use the given order_by and ignore the default sorting options' do
-      Document.should_not_receive(:default_sorting_options)
       Document.filter_by('order_by' => 'created_at.asc').should == [document, other_document]
     end
   end
@@ -452,37 +446,15 @@ describe Mongoid::QueryStringInterface do
 
       context "when give replace attributes for sorting" do
         it "should use the replace attribute for the outside parameters" do
-          order = :tags.asc
-          new_attribute = 'tags'
-          new_attribute.stub_chain(:to_sym, :asc).and_return(order)
-          Document.stub!(:where).and_return(criteria)
-          Document.stub!(:replace_attribute).with('fullnames', Document.sorting_attributes_to_replace).and_return(new_attribute)
-          criteria.should_receive(:order_by).with(order).and_return(criteria)
-          Document.filter_by('order_by' => 'fullnames')
+          Document.filter_by('order_by' => 'fullnames').should == [document, other_document]
         end
 
         it "should use the replace attribute for the outside parameters with modifiers" do
-          order = :tags.desc
-          new_attribute = 'tags'
-          new_attribute.stub_chain(:to_sym, :desc).and_return(order)
-          Document.stub!(:where).and_return(criteria)
-          Document.stub!(:replace_attribute).with('fullnames', Document.sorting_attributes_to_replace).and_return(new_attribute)
-          criteria.should_receive(:order_by).with(order).and_return(criteria)
-          Document.filter_by('order_by' => 'fullnames.desc')
+          Document.filter_by('order_by' => 'fullnames.desc').should == [other_document, document]
         end
 
         it "should use the replace attribute for the default sorting parameters with modifiers" do
-          updated_order = :updated_at_sortable.asc
-          created_order = :created_at_sortable.desc
-          update_attribute = 'updated_at_sortable'
-          update_attribute.stub_chain(:to_sym, :asc).and_return(updated_order)
-          created_attribute = 'created_at_sortable'
-          created_attribute.stub_chain(:to_sym, :desc).and_return(created_order)
-          Document.stub!(:where).and_return(criteria)
-          Document.stub!(:replace_attribute).with(:updated_at, Document.sorting_attributes_to_replace).and_return(update_attribute)
-          Document.stub!(:replace_attribute).with(:created_at, Document.sorting_attributes_to_replace).and_return(created_attribute)
-          criteria.should_receive(:order_by).with(created_order, updated_order).and_return(criteria)
-          Document.filter_by('tags.all' => 'flamengo')
+          Document.filter_by('tags.all' => 'flamengo').should == [other_document, document]
         end
       end
     end

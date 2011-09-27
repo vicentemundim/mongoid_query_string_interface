@@ -1,32 +1,16 @@
-require File.expand_path(File.join('helpers'), File.dirname(__FILE__))
-require File.expand_path(File.join('paginate'), File.dirname(__FILE__))
-require File.expand_path(File.join('parsers', 'filter_parser'), File.dirname(__FILE__))
-require File.expand_path(File.join('parsers', 'filters_parser'), File.dirname(__FILE__))
+require "query_string_interface"
+require "mongoid/paginate"
 
 module Mongoid
   module QueryStringInterface
-    include Mongoid::QueryStringInterface::Helpers
+    include ::QueryStringInterface
+    include ::QueryStringInterface::Helpers
 
     def self.extended(base)
       base.extend Mongoid::Paginate unless base.methods.include?(:paginate)
     end
 
-    NORMAL_CONDITIONAL_OPERATORS = [:exists, :gte, :gt, :lte, :lt, :ne, :size, :near, :within]
-    ARRAY_CONDITIONAL_OPERATORS = [:all, :in, :nin]
-    CONDITIONAL_OPERATORS = ARRAY_CONDITIONAL_OPERATORS + NORMAL_CONDITIONAL_OPERATORS
-    SORTING_OPERATORS = [:asc, :desc]
-    OR_OPERATOR = :or
-
-    ATTRIBUTE_REGEX = /^(.*)\.(#{(CONDITIONAL_OPERATORS + SORTING_OPERATORS + [OR_OPERATOR]).join('|')})$/
-    OPERATOR_REGEX = /^.*\.(#{Mongoid::QueryStringInterface::CONDITIONAL_OPERATORS.join('|')})$/
-
     PAGER_ATTRIBUTES = [:total_entries, :total_pages, :per_page, :offset, :previous_page, :current_page, :next_page]
-
-    ORDER_BY_PARAMETER = :order_by
-    PAGINATION_PARAMTERS = [:per_page, :page]
-    FRAMEWORK_PARAMETERS = [:controller, :action, :format]
-    CONTROL_PARAMETERS = [:disable_default_filters]
-    RESERVED_PARAMETERS = FRAMEWORK_PARAMETERS + PAGINATION_PARAMTERS + [ORDER_BY_PARAMETER] + CONTROL_PARAMETERS
 
     def filter_by(params={})
       params = hash_with_indifferent_access(params)
@@ -74,62 +58,11 @@ module Mongoid
       end
     end
 
-    def default_filtering_options
-      {}
-    end
-
-    def default_sorting_options
-      []
-    end
-
-    def default_pagination_options
-      { :per_page => 12, :page => 1 }
-    end
-
-    def sorting_attributes_to_replace
-      {}
-    end
-
-    def filtering_attributes_to_replace
-      {}
-    end
-
     protected
-      def pagination_options(options)
-        hash_with_indifferent_access(default_pagination_options).merge(options)
-      end
-
-      def filtering_options(options)
-        Mongoid::QueryStringInterface::Parsers::FiltersParser.new(
-          only_filtering(options),
-          options.has_key?(:disable_default_filters) ? {} : default_filtering_options,
-          filtering_attributes_to_replace
-        ).parse
-      end
-
       def sorting_options(options)
-        parse_order_by(options) || default_sorting_options.map { |field| sorting_operator_for(field) }
-      end
-
-      def only_filtering(options)
-        options.except(*RESERVED_PARAMETERS)
-      end
-
-      def parse_order_by(options)
-        if options.has_key?('order_by')
-          options['order_by'].split('|').map do |field|
-            sorting_operator_for(field)
-          end
-        end
-      end
-
-      def sorting_operator_for(field)
-        if field.is_a?(Mongoid::Criterion::Complex)
-          replace_attribute(field.key, sorting_attributes_to_replace).to_sym.send(field.operator)
-        elsif match = field.match(/(.*)\.(#{SORTING_OPERATORS.join('|')})/)
-          replace_attribute(match[1], sorting_attributes_to_replace).to_sym.send(match[2])
-        else
-          replace_attribute(field, sorting_attributes_to_replace).to_sym.asc
+        super(options).map do |sort_option|
+          attribute = sort_option.keys.first
+          attribute.send(sort_option[attribute])
         end
       end
 
