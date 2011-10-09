@@ -1,4 +1,7 @@
-# Overview ![alt build status](https://secure.travis-ci.org/vicentemundim/query_string_interface.png "Build Status")
+# Overview [![build status][1]][2]
+
+[1]: https://secure.travis-ci.org/vicentemundim/mongoid_query_string_interface.png
+[2]: http://travis-ci.org/#!/vicentemundim/mongoid_query_string_interface
 
 ### About Mongoid::QueryStringInterace
 
