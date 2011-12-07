@@ -16,12 +16,12 @@ Gem::Specification.new do |s|
 
   s.add_runtime_dependency("query_string_interface", [">= 0.1.0"])
   s.add_runtime_dependency("will_paginate", ["~> 3.0.pre2"])
-  s.add_runtime_dependency("mongoid", ["~> 2.0.2"])
+  s.add_runtime_dependency("mongoid", [">= 2.0.2"])
 
   s.add_development_dependency(%q<rspec>, [">= 2.3.0"])
   s.add_development_dependency(%q<database_cleaner>, [">= 0.5.0"])
 
-  s.files = Dir.glob("lib/**/*") + %w(MIT_LICENSE README.rdoc Gemfile Gemfile.lock)
+  s.files = Dir.glob("lib/**/*") + %w(MIT_LICENSE README.md Gemfile Gemfile.lock)
   s.require_path = 'lib'
 end
 
