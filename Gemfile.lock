@@ -1,8 +1,8 @@
 PATH
   remote: .
   specs:
-    mongoid_query_string_interface (0.6.0)
-      mongoid (~> 2.0.2)
+    mongoid_query_string_interface (0.6.2)
+      mongoid (>= 2.0.2)
       query_string_interface (>= 0.1.0)
       will_paginate (~> 3.0.pre2)
 

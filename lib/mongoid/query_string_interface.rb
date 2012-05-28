@@ -18,14 +18,7 @@ module Mongoid
     end
 
     def filter_with_pagination_by(params)
-      result = filter_by(params)
-
-      pager = PAGER_ATTRIBUTES.inject({}) do |pager, attr|
-        pager[attr] = result.send(attr)
-        pager
-      end
-
-      return { :pager => pager, collection_name_in_pagination_result => result }
+      build_results_with_pager_for(filter_by(params))
     end
 
     def filter_with_optimized_pagination_by(params={})
@@ -50,12 +43,9 @@ module Mongoid
       params = hash_with_indifferent_access(params)
 
       pagination = pagination_options(params)
-      pager = WillPaginate::Collection.new pagination[:page], pagination[:per_page], where(filtering_options(params)).count
+      collection = WillPaginate::Collection.new pagination[:page], pagination[:per_page], where(filtering_options(params)).count
 
-      PAGER_ATTRIBUTES.inject({}) do |result, attr|
-        result[attr] = pager.send(attr)
-        result
-      end
+      build_pager_from(collection)
     end
 
     protected
@@ -64,6 +54,25 @@ module Mongoid
           attribute = sort_option.keys.first
           attribute.send(sort_option[attribute])
         end
+      end
+
+      def results_with_pager(collection, total, params={})
+        params = hash_with_indifferent_access(params)
+        pagination = pagination_options(params)
+
+        result = create_paginatable_collection(collection, total, pagination[:page], pagination[:per_page])
+        build_results_with_pager_for(result)
+      end
+
+      def build_pager_from(collection)
+        PAGER_ATTRIBUTES.inject({}) do |result, attr|
+          result[attr] = collection.send(attr)
+          result
+        end
+      end
+
+      def build_results_with_pager_for(collection)
+        { :pager => build_pager_from(collection), collection_name_in_pagination_result => collection }
       end
 
       def collection_name_in_pagination_result

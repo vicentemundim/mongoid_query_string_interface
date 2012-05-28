@@ -28,6 +28,10 @@ class Document
   def self.sorting_attributes_to_replace
     { :fullnames => :tags, :updated_at => :updated_at_sortable}
   end
+
+  def self.paginatable_collection_from(collection, total, params)
+    results_with_pager(collection, total, params)
+  end
 end
 
 class SimpleDocument
@@ -475,6 +479,38 @@ describe Mongoid::QueryStringInterface do
       context = mock('context', :count => 100)
       Document.should_receive(:where).with({'status' => 'published'}).and_return(context)
       Document.paginated_collection_with_filter_by(:page => 3, :per_page => 20).should == {:total_entries => 100, :total_pages => 5, :per_page => 20, :offset => 40, :previous_page => 2, :current_page => 3, :next_page => 4}
+    end
+  end
+
+  describe "results with pager" do
+    let(:collection) do
+      [Document.new, Document.new, Document.new]
+    end
+
+    let(:options)  { {:per_page => per_page, :page => page} }
+
+    let(:per_page) { 3 }
+    let(:page)     { 2 }
+    let(:total)    { 8 }
+
+    it "should return a pager" do
+      Document.paginatable_collection_from(collection, total, options)[:pager].should == {
+        :total_entries => 8,
+        :total_pages   => 3,
+        :per_page      => 3,
+        :offset        => 3,
+        :previous_page => 1,
+        :current_page  => 2,
+        :next_page     => 3
+      }
+    end
+
+    it "should return the results, using the model name as the key, as a paginatable collection" do
+      key = Document.model_name.human.underscore.pluralize.to_sym
+      paginatable_collection = WillPaginate::Collection.create page, per_page, total do |pager|
+        pager.replace(collection)
+      end
+      Document.paginatable_collection_from(collection, total, options)[key].should == paginatable_collection
     end
   end
 end
