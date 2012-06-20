@@ -55,9 +55,12 @@ module Mongoid
     end
 
     def field_filtering_options(params)
-      super.tap do |hash|
-        hash[:without] = hash.delete(:except) if hash.present?
+      hash = super
+      if hash.present?
+        hash = hash.dup
+        hash[:without] = hash.delete(:except)
       end
+      hash
     end
 
     protected
