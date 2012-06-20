@@ -154,6 +154,7 @@ describe Mongoid::QueryStringInterface do
       @context = mock('context')
       Document.stub!(:where).and_return(@context)
       @context.stub!(:order_by).and_return(@context)
+      @context.stub!(:filter_fields_by).and_return(@context)
     end
 
     it "should add a paginate method to the document" do
@@ -267,6 +268,7 @@ describe Mongoid::QueryStringInterface do
         criteria.stub!(:where).and_return(criteria)
         criteria.stub!(:order_by).and_return(criteria)
         criteria.stub!(:paginate).and_return(criteria)
+        criteria.stub!(:filter_fields_by).and_return(criteria)
         criteria
       end
 
@@ -459,6 +461,22 @@ describe Mongoid::QueryStringInterface do
 
         it "should use the replace attribute for the default sorting parameters with modifiers" do
           Document.filter_by('tags.all' => 'flamengo').should == [other_document, document]
+        end
+      end
+    end
+
+    describe "when filtering fields" do
+      describe "with only" do
+        it "should only return the specified fields" do
+          document = Document.filter_by('only' => 'title|_id').first
+          document.attributes.should == {"_id" => document.id, "title" => document.title}
+        end
+      end
+
+      describe "with except" do
+        it "should return the all fields except the specified fields" do
+          document = Document.filter_by('except' => 'title').first
+          document.attributes.should == document.reload.attributes.except('title')
         end
       end
     end

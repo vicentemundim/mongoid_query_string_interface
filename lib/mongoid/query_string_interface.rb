@@ -36,7 +36,8 @@ module Mongoid
     end
 
     def filter_only_by(params={})
-      where(filtering_options(hash_with_indifferent_access(params)))
+      params = hash_with_indifferent_access(params)
+      where(filtering_options(params)).filter_fields_by(params)
     end
 
     def paginated_collection_with_filter_by(params={})
@@ -46,6 +47,17 @@ module Mongoid
       collection = WillPaginate::Collection.new pagination[:page], pagination[:per_page], where(filtering_options(params)).count
 
       build_pager_from(collection)
+    end
+
+    def filter_fields_by(params)
+      params = field_filtering_options(hash_with_indifferent_access(params))
+      params.present? ? send(*params.first) : criteria
+    end
+
+    def field_filtering_options(params)
+      super.tap do |hash|
+        hash[:without] = hash.delete(:except) if hash.present?
+      end
     end
 
     protected
