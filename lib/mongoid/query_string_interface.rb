@@ -91,7 +91,7 @@ module Mongoid
       end
 
       def collection_name_in_pagination_result
-        model_name.human.underscore.pluralize.to_sym
+        model_name.human.underscore.pluralize.gsub(/\s/, "_").to_sym
       end
   end
 end

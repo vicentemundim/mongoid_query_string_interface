@@ -34,11 +34,13 @@ class Document
   end
 end
 
-class SimpleDocument
-  include Mongoid::Document
-  extend Mongoid::QueryStringInterface
+module MyTests
+  class SimpleDocument
+    include Mongoid::Document
+    extend Mongoid::QueryStringInterface
 
-  field :title
+    field :title
+  end
 end
 
 class EmbeddedDocument
@@ -69,23 +71,23 @@ describe Mongoid::QueryStringInterface do
 
   describe "defaults" do
     it "should return an empty hash as the default filtering options" do
-      SimpleDocument.default_filtering_options.should == {}
+      MyTests::SimpleDocument.default_filtering_options.should == {}
     end
 
     it "should return an empty array as the default sorting options" do
-      SimpleDocument.default_sorting_options.should == []
+      MyTests::SimpleDocument.default_sorting_options.should == []
     end
 
     it "should return hash with per_page => 12 and page => 1 for the default pagination options" do
-      SimpleDocument.default_pagination_options.should == { :per_page => 12, :page => 1 }
+      MyTests::SimpleDocument.default_pagination_options.should == { :per_page => 12, :page => 1 }
     end
 
     it "should return an empty hash as the default sorting attributes to replace" do
-      SimpleDocument.sorting_attributes_to_replace.should == {}
+      MyTests::SimpleDocument.sorting_attributes_to_replace.should == {}
     end
 
     it "should return an empty hash as the default filtering attributes to replace" do
-      SimpleDocument.filtering_attributes_to_replace.should == {}
+      MyTests::SimpleDocument.filtering_attributes_to_replace.should == {}
     end
   end
 
@@ -124,8 +126,8 @@ describe Mongoid::QueryStringInterface do
     it "should return results using human model name" do
       params = { 'title' => 'title' }
       collection = mock(WillPaginate::Collection).as_null_object
-      Document.stub(:filter_by).with(params).and_return(collection)
-      Document.filter_with_pagination_by(params).should have_key(:documents)
+      MyTests::SimpleDocument.stub(:filter_by).with(params).and_return(collection)
+      MyTests::SimpleDocument.filter_with_pagination_by(params).should have_key(:simple_documents)
     end
   end
 
@@ -524,11 +526,10 @@ describe Mongoid::QueryStringInterface do
     end
 
     it "should return the results, using the model name as the key, as a paginatable collection" do
-      key = Document.model_name.human.underscore.pluralize.to_sym
       paginatable_collection = WillPaginate::Collection.create page, per_page, total do |pager|
         pager.replace(collection)
       end
-      Document.paginatable_collection_from(collection, total, options)[key].should == paginatable_collection
+      Document.paginatable_collection_from(collection, total, options)[:documents].should == paginatable_collection
     end
   end
 end
