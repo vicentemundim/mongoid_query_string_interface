@@ -21,17 +21,13 @@ require 'will_paginate/collection'
 
 # Requires supporting files with custom matchers and macros, etc,
 # in ./support/ and its subdirectories.
-Dir[File.expand_path('support/**/*.rb', File.dirname(__FILE__))].each { |f| require f }
+Dir[File.expand_path('../support/**/*.rb', __FILE__)].each { |f| require f }
 
 # Requires lib.
-Dir[File.expand_path('../lib/**/*.rb', File.dirname(__FILE__))].each { |f| require f }
+Dir[File.expand_path('../../lib/**/*.rb', __FILE__)].each { |f| require f }
 
 # Setup Mongoid.
-Mongoid.configure do |config|
-  name = "query_string_interface_test"
-  config.master = Mongo::Connection.new.db(name)
-  config.allow_dynamic_fields = true
-end
+Mongoid.load!(File.expand_path("../mongoid.yml", __FILE__), :test)
 
 RSpec.configure do |config|
   # == Mock Framework
@@ -46,7 +42,7 @@ RSpec.configure do |config|
   config.before(:suite) do
     DatabaseCleaner.strategy = :truncation
   end
-  
+
   config.before(:each) do
     DatabaseCleaner.clean
   end
